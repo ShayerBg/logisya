@@ -1,6 +1,6 @@
 /* LogisYa · datos de ejemplo y reglas del negocio compartidas entre la vista del operador y la del trabajador.
    El estado se guarda en localStorage para que lo que hace una vista se vea en la otra. */
-const LY_KEY='logisya-demo-v2';
+const LY_KEY='logisya-demo-v3';
 const ROLES=['Mesero/a','Bartender','Anfitrión/a','Promotor/a BTL','Logístico de montaje','Supervisor de piso'];
 const ZONAS=['Norte-Centro Histórico','Riomar','Sur Occidente','Metropolitana','Soledad','Puerto Colombia'];
 const DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
@@ -14,12 +14,13 @@ const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 function seed(){
   const W=(id,nombre,roles,zona,disp,r,eventos,asis,ops,enBolsa,desde)=>({id,nombre,roles,zona,disp,ratings:[r],eventos,asis,ops,enBolsa,desde,presentes:0,ausentes:0});
   const P=(wid,estado,origen='propio')=>({wid,estado,origen,at:T('2026-10-08',10)});
+  const A=ent=>Object.assign(nuevaAsistencia(),ent?{ent,estado:'presente'}:{});
   const V=o=>Object.assign({convocados:[],postulaciones:[],asistencia:{},reemplazo:null,bloqueada:false},o);
-  return {offsetH:0,seq:100,
+  return {offsetH:0,seq:100,ADMIN:{nombre:'Administración LogisYa'},
   OPS:{
-    op1:{id:'op1',nombre:'Eventos Caribe BTL',compartir:true,invite:'logisya.co/i/ECB-7Q2'},
-    op2:{id:'op2',nombre:'Catering La Arenosa',compartir:true,invite:'logisya.co/i/CLA-3M8'},
-    op3:{id:'op3',nombre:'Montajes del Norte',compartir:false,invite:'logisya.co/i/MDN-9K1'}},
+    op1:{id:'op1',nombre:'Eventos Caribe BTL',compartir:true,activo:true,invite:'logisya.co/i/ECB-7Q2'},
+    op2:{id:'op2',nombre:'Catering La Arenosa',compartir:true,activo:true,invite:'logisya.co/i/CLA-3M8'},
+    op3:{id:'op3',nombre:'Montajes del Norte',compartir:false,activo:true,invite:'logisya.co/i/MDN-9K1'}},
   WORKERS:[
     W('w1','Andrea Pérez',['Mesero/a','Anfitrión/a'],'Norte-Centro Histórico',[0,5,6],4.8,23,96,['op1'],true,'2026-03-02'),
     W('w2','Carlos Ariza',['Logístico de montaje'],'Soledad',[1,2,3,4,5,6],4.5,41,93,['op1'],true,'2026-02-11'),
@@ -38,9 +39,9 @@ function seed(){
     {id:'e0',op:'op1',nombre:'Cena de gala aniversario corporativo',fecha:'2026-10-10',lugar:'Hotel El Prado',zona:'Norte-Centro Histórico',vacantes:[
       V({id:'v01',rol:'Mesero/a',ini:'17:00',fin:'01:00',cupos:3,tarifa:130000,fase:'general',cierre:T('2026-10-07',12),convocados:['w1'],
         postulaciones:[P('w1','confirmado'),P('w3','confirmado','bolsa'),P('w9','confirmado','bolsa')],
-        asistencia:{w1:{ent:'16:52',sal:'',estado:'presente',cal:0},w3:{ent:'17:04',sal:'',estado:'presente',cal:0},w9:{ent:'',sal:'',estado:'pendiente',cal:0}}}),
+        asistencia:{w1:A('16:52'),w3:A('17:04'),w9:A('')}}),
       V({id:'v02',rol:'Supervisor de piso',ini:'16:00',fin:'01:00',cupos:1,tarifa:180000,fase:'propio',cierre:T('2026-10-06',12),convocados:['w10'],
-        postulaciones:[P('w10','confirmado')],asistencia:{w10:{ent:'15:48',sal:'',estado:'presente',cal:0}}})]},
+        postulaciones:[P('w10','confirmado')],asistencia:{w10:A('15:48')}})]},
     {id:'e1',op:'op1',nombre:'Activación de marca · Festival Gastronómico',fecha:'2026-10-17',lugar:'Malecón del Río',zona:'Norte-Centro Histórico',vacantes:[
       V({id:'v11',rol:'Promotor/a BTL',ini:'15:00',fin:'22:00',cupos:6,tarifa:110000,fase:'propio',cierre:T('2026-10-11',0),convocados:['w5','w7'],
         postulaciones:[P('w5','confirmado'),P('w7','pendiente')]}),
@@ -64,6 +65,7 @@ function seed(){
       V({id:'v61',rol:'Logístico de montaje',ini:'06:00',fin:'18:00',cupos:20,tarifa:120000,fase:'propio',cierre:T('2026-10-14',12),convocados:['w4'],postulaciones:[P('w4','confirmado')]})]}
   ]};
 }
+function nuevaAsistencia(){return {ent:'',sal:'',estado:'pendiente',validado:false,cal:0,reporte:null}}
 function newVacante(o){return Object.assign({convocados:[],postulaciones:[],asistencia:{},reemplazo:null,bloqueada:false},o)}
 
 /* ---------- Persistencia ---------- */
@@ -128,7 +130,7 @@ function tick(){
   return msgs;
 }
 function visible(e,v,w){
-  if(isPast(e.fecha))return false;
+  if(isPast(e.fecha)||OP(e.op).activo===false)return false;
   if(v.reemplazo&&v.reemplazo.notificados.includes(w.id))return true;
   if(w.ops.includes(e.op)&&(v.fase==='general'||v.convocados.includes(w.id)))return true;
   return v.fase==='general'&&w.enBolsa&&OP(e.op).compartir;
@@ -137,13 +139,27 @@ function origenPara(e,v,w){
   if(v.reemplazo&&v.reemplazo.notificados.includes(w.id))return 'reemplazo';
   return w.ops.includes(e.op)?'propio':'bolsa';
 }
-function candidatosReemplazo(e,v){
+/* Emparejamiento por reglas (sin aprendizaje automático, funciona desde el primer evento).
+   Requisitos obligatorios: tener el rol, estar disponible ese día de la semana y no tener otro turno confirmado ese día.
+   Si falta uno obligatorio, la persona se descarta. Requisitos deseables (suman puntaje):
+   haber trabajado antes con el operador (+2), vivir en la zona del evento (+1) y la calificación (hasta +1). */
+function cumpleObligatorios(e,v,w){
   const dia=D(e.fecha).getDay();
-  return DB.WORKERS.filter(w=>w.roles.includes(v.rol)&&w.disp.includes(dia)
-    &&!v.postulaciones.some(p=>p.wid===w.id)
+  return w.roles.includes(v.rol)&&w.disp.includes(dia)
+    &&!DB.EVENTS.some(x=>x.fecha===e.fecha&&x.vacantes.some(y=>y.postulaciones.some(p=>p.wid===w.id&&p.estado==='confirmado')));
+}
+function puntaje(e,v,w){
+  const motivos=[];let p=0;
+  if(w.ops.includes(e.op)){p+=2;motivos.push('ya trabajó con este operador')}
+  if(w.zona===e.zona){p+=1;motivos.push('vive en la zona')}
+  p+=rating(w)/5;
+  return {puntaje:Math.round(p*100)/100,motivos};
+}
+function candidatosReemplazo(e,v){
+  return DB.WORKERS.filter(w=>!v.postulaciones.some(p=>p.wid===w.id)
     &&(w.ops.includes(e.op)||(w.enBolsa&&OP(e.op).compartir))
-    &&!DB.EVENTS.some(x=>x.fecha===e.fecha&&x.vacantes.some(y=>y.postulaciones.some(p=>p.wid===w.id&&p.estado==='confirmado'))))
-    .sort((a,b)=>rating(b)-rating(a)).slice(0,5);
+    &&cumpleObligatorios(e,v,w))
+    .sort((a,b)=>puntaje(e,v,b).puntaje-puntaje(e,v,a).puntaje).slice(0,5);
 }
 function marcarAusente(e,v,wid){
   const a=v.asistencia[wid];a.estado='ausente';a.ent='';a.sal='';
@@ -153,6 +169,32 @@ function marcarAusente(e,v,wid){
   v.reemplazo={inicio:now().getTime(),notificados:c.map(w=>w.id),por:wid};
   return c.length?`Se notificó a ${c.length} persona(s) disponibles con perfil de ${v.rol}`:'No hay personas disponibles con ese perfil';
 }
+/* ---------- Registro de horas ----------
+   El trabajador marca entrada y salida desde su celular el día del evento. La hora la pone el sistema, no se escribe a mano.
+   El operador no puede editar las horas: solo valida el registro o lo reporta al administrador.
+   Una vez validado, el registro queda bloqueado. */
+const hhmm=d=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+// La jornada va desde el día del evento hasta el mediodía siguiente, para turnos que terminan después de medianoche
+const enJornada=e=>isToday(e.fecha)||iso(new Date(now().getTime()-12*3600e3))===e.fecha;
+function puedeMarcar(e,v,wid){return enJornada(e)&&v.postulaciones.some(p=>p.wid===wid&&p.estado==='confirmado')}
+function marcar(e,v,wid,tipo){
+  if(!puedeMarcar(e,v,wid))return 'Solo puedes marcar el día del evento y si estás confirmado';
+  const a=v.asistencia[wid]||(v.asistencia[wid]=nuevaAsistencia());
+  if(a.validado)return 'El registro ya fue validado y no se puede cambiar';
+  if(tipo==='ent'){if(a.ent)return 'La entrada ya está marcada';a.ent=hhmm(now());a.estado='presente';W_(wid).presentes++;return `Entrada marcada a las ${a.ent}`}
+  if(!a.ent)return 'Primero marca la entrada';
+  if(a.sal)return 'La salida ya está marcada';
+  a.sal=hhmm(now());return `Salida marcada a las ${a.sal}. Trabajaste ${horas(a.ent,a.sal).toFixed(1)} h`;
+}
+function validar(v,wid){const a=v.asistencia[wid];if(!a||!a.ent||!a.sal)return false;if(a.reporte&&a.reporte.estado==='abierto')return false;a.validado=true;return true}
+function calificar(v,wid,n){const a=v.asistencia[wid];if(!a||!a.validado)return false;const w=W_(wid);if(a.cal)w.ratings.pop();if(n)w.ratings.push(n);a.cal=n;return true}
+function reportar(v,wid,motivo){const a=v.asistencia[wid];if(!a||a.validado)return false;a.reporte={motivo,at:now().getTime(),estado:'abierto',decision:''};return true}
+function resolverReporte(v,wid,decision){const a=v.asistencia[wid];if(!a||!a.reporte||a.reporte.estado!=='abierto')return false;
+  a.reporte.estado='resuelto';a.reporte.decision=decision;
+  if(decision==='anular'){a.ent='';a.sal='';a.estado='pendiente'}else{a.validado=true}
+  return true}
+function reportesAbiertos(){const r=[];DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>Object.entries(v.asistencia).forEach(([wid,a])=>{if(a.reporte)r.push({e,v,wid,a})})));return r}
+
 const PAST=[['Expo Moda Caribe','2026-09-26'],['Feria del Libro de Barranquilla','2026-09-12'],['Lanzamiento de app bancaria','2026-08-29'],['Congreso de Odontología','2026-08-15']];
 function hist(w){return PAST.slice(0,Math.min(4,1+Math.floor(w.eventos/10))).map((p,i)=>({evento:p[0],fecha:p[1],rol:w.roles[i%w.roles.length],op:OP(w.ops[0]).nombre,asistio:!(w.asis<90&&i===1)}))}
 function histTable(w){
@@ -167,6 +209,6 @@ function histTable(w){
 function appNav({tabs,active,selectHtml,otherHref,otherLabel}){
   return `<div class="nav-in">
     <a class="logo" href="index.html">${LOGO}LogisYa</a>
-    <nav class="nav-links" aria-label="Secciones">${tabs.map(([k,t])=>`<button data-act="view" data-v="${k}" ${k===active?'aria-current="page"':''}>${t}</button>`).join('')}<a href="${otherHref}">${otherLabel} ↗</a></nav>
+    <nav class="nav-links" aria-label="Secciones">${tabs.map(([k,t])=>`<button data-act="view" data-v="${k}" ${k===active?'aria-current="page"':''}>${t}</button>`).join('')}<a href="${otherHref}">${otherLabel} ↗</a>${/admin\.html$/.test(location.pathname)?'':'<a href="admin.html">Admin ↗</a>'}</nav>
     <div class="nav-right">${selectHtml}<span class="chip-clock" title="Hora simulada de la demo">${fdt(now())}</span><button class="btn btn-dark btn-sm" data-act="adv" title="Simula el paso del tiempo para ver cómo se abren las vacantes">Avanzar 6 h</button></div></div>`;
 }
