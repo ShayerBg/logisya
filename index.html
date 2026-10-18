@@ -1,0 +1,142 @@
+<title>LogisYa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="logisya.css">
+<style>
+.hero{background:var(--hero);color:#fff;padding-inline:16px;overflow:hidden}
+.hero-in{max-width:1200px;margin:0 auto;padding-block:64px 0;text-align:center;display:grid;justify-items:center;gap:22px}
+.badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 22px;font-size:14px;color:#D4D4DA}
+.badges span{display:inline-flex;align-items:center;gap:7px}
+.badges svg{width:14px;height:14px;color:#E3A6F0}
+.badges b{color:#fff;font-weight:600}
+.hero h1{font-size:clamp(2.5rem,7vw,4.6rem);letter-spacing:-.05em;line-height:1.02;max-width:15ch}
+.hero .sub{color:#A9A9B2;font-size:17px;max-width:56ch}
+.ctas{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;align-items:center}
+.ctas .btn-text{color:#8D8D96;font-weight:500}
+.ctas .btn-text:hover{color:#fff}
+.visual{position:relative;width:100%;max-width:780px;height:300px;margin-top:26px}
+.cred{position:absolute;left:0;top:30px;width:320px;height:210px;border-radius:24px;padding:22px;text-align:left;display:grid;align-content:space-between;
+  background:radial-gradient(70% 90% at 25% 15%,#5A5A5E 0%,transparent 60%),linear-gradient(135deg,#3B3B3F 0%,#151517 70%);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 60px -20px rgba(0,0,0,.8);z-index:2}
+.cred .chip{width:30px;height:22px;border-radius:5px;border:1.5px solid #B9B9C0;position:relative}
+.cred .chip::after{content:"";position:absolute;inset:5px 9px;border:1px solid #B9B9C0;border-radius:2px}
+.cred .who{font-size:15px;color:#E9E9EE}
+.cred .role{font:500 15px var(--mono);letter-spacing:.04em;color:#fff;margin-top:4px}
+.cred small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9B9BA3}
+.cred .foot{display:flex;gap:30px;font:500 12px var(--mono);color:#E9E9EE}
+.disc{position:absolute;left:50%;top:40px;width:230px;height:230px;transform:translateX(-38%);border-radius:50%;z-index:1;
+  background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.75) 0 7%,transparent 30%),
+             radial-gradient(circle at 50% 50%,#9FC7D6 0 48%,transparent 49%),
+             repeating-conic-gradient(from 10deg,#12191C 0 4deg,#A6D4E0 4deg 6deg),#0C1214;
+  box-shadow:inset -18px -14px 40px rgba(0,0,0,.6),0 0 60px -10px rgba(255,90,60,.55),inset 10px 0 30px rgba(255,80,50,.5)}
+.disc::after{content:"";position:absolute;inset:30%;border-radius:50%;border:3px solid #6F98A8;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4L18 8' stroke='%235E8797' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/62% no-repeat,#A9D0DD}
+.mini{position:absolute;right:0;top:0;width:250px;border-radius:18px;background:#fff;color:var(--ink);overflow:hidden;text-align:left;box-shadow:0 30px 60px -20px rgba(0,0,0,.8);z-index:3}
+.mini .top{background:#F8EEFB;display:flex;gap:10px;align-items:center;padding:12px 14px}
+.mini .top .tile{width:34px;height:34px}
+.mini .top b{display:block;font-weight:600;font-size:15px}
+.mini .top span{font-size:12px;color:var(--muted)}
+.mini .body{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.mini .body small{font-size:11px;color:var(--muted)}
+.mini .big{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.mini .up{font-size:11px;font-weight:600;color:var(--ok);background:var(--ok-bg);padding:1px 5px;border-radius:4px;margin-left:4px}
+@media (max-width:760px){.visual{height:auto;display:grid;gap:14px;justify-items:center;padding-bottom:30px}.cred,.mini{position:relative;left:auto;right:auto;top:auto}.disc{display:none}.cred{width:min(320px,100%)}}
+
+.section{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:90px 20px;display:grid;gap:40px}
+.center{text-align:center;justify-self:center}
+.features{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.features .kcard{padding:22px;min-height:200px;align-content:space-between}
+.features .kcard p{font-size:13px;color:var(--muted);margin-top:6px}
+.fdisc{display:grid;place-items:center}
+.fdisc .disc{position:relative;left:auto;top:auto;transform:none;width:120px;height:120px}
+@media (max-width:980px){.features{grid-template-columns:repeat(2,minmax(0,1fr))}.fdisc{display:none!important}}
+@media (max-width:520px){.features{grid-template-columns:minmax(0,1fr)}}
+.views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:860px){.views{grid-template-columns:minmax(0,1fr)}}
+.view{border-radius:28px;padding:32px;display:grid;gap:22px;align-content:space-between;min-height:400px;text-decoration:none;color:inherit;transition:transform .2s ease;position:relative;overflow:hidden}
+.view:hover{transform:translateY(-3px)}
+.view h3{font-size:clamp(1.5rem,2.6vw,2rem);letter-spacing:-.04em}
+.view p{margin-top:10px;max-width:42ch}
+.view.dark{background:radial-gradient(60% 80% at 85% 10%,rgba(107,69,255,.45),transparent 60%),#060607;color:#fff}
+.view.dark p{color:#BEBEC7}
+.view.light{background:var(--card)}
+.view.light p{color:var(--ink-2)}
+.wcard{background:#fff;color:var(--ink);border-radius:18px;padding:16px;display:grid;gap:10px;box-shadow:0 20px 40px -24px rgba(0,0,0,.5)}
+.wcard .r{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.reset{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;padding:14px 18px;font-size:14px;color:var(--ink-2)}
+</style>
+
+<header class="nav"><div class="nav-in">
+  <a class="logo" href="#top" id="logo"></a>
+  <nav class="nav-links" aria-label="Secciones"><a href="#como">Cómo funciona</a><a href="#vistas">Vistas</a><a href="operador.html">Para operadores</a><a href="trabajador.html">Para trabajadores</a></nav>
+  <div class="nav-right"><a class="btn btn-dark btn-sm" href="operador.html">Entrar</a></div>
+</div></header>
+
+<section class="hero" id="top"><div class="hero-in">
+  <div class="badges"><span id="b1"></span><span id="b2"></span></div>
+  <h1>Tu personal de eventos, confirmado.</h1>
+  <p class="sub">Crea el evento, define roles y turnos, convoca a tu equipo y registra las horas trabajadas. Sin grupos de WhatsApp ni hojas de cálculo.</p>
+  <div class="ctas"><a class="btn btn-primary" href="operador.html" id="cta1">Probar como operador</a><a class="btn btn-text" href="trabajador.html">Ver la vista del trabajador</a></div>
+  <div class="visual" aria-hidden="true">
+    <div class="cred">
+      <div class="row between"><span class="chip"></span><strong style="font-size:14px">LogisYa</strong></div>
+      <div><div class="who">Andrea Pérez</div><div class="role">MESERA · 17:00–01:00</div></div>
+      <div class="foot"><div><small>Entrada</small>16:52</div><div><small>Evento</small>Cena de gala</div></div>
+    </div>
+    <div class="disc"></div>
+    <div class="mini">
+      <div class="top"><span class="tile t1" id="mtile"></span><div><b>Eventos Caribe BTL</b><span>Cupos de esta semana</span></div></div>
+      <div class="body"><div><small>Cupos cubiertos</small><div><span class="big" id="mcupos">—</span><span class="up" id="mpct">—</span></div></div>
+        <svg width="70" height="30" viewBox="0 0 70 30"><path d="M2 26 L12 22 L20 24 L30 15 L38 18 L48 9 L56 11 L68 3" fill="none" stroke="#2BC48A" stroke-width="2" stroke-linejoin="round"/><path d="M2 26 L12 22 L20 24 L30 15 L38 18 L48 9 L56 11 L68 3 L68 30 L2 30Z" fill="#2BC48A" opacity=".12"/></svg></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="section" id="como">
+  <h2 class="h2 center" style="font-size:clamp(1.7rem,3.4vw,2.4rem)">Coordina a tu personal operativo<span class="soft" style="display:block">sin perder a nadie en el chat</span></h2>
+  <div class="features" id="features"></div>
+</section>
+
+<section class="section" id="vistas" style="padding-top:70px">
+  <div class="page-head"><div><span class="eyebrow" id="eb"></span>
+    <h2 class="h1" style="margin-top:10px;max-width:16ch">Un mismo evento, dos lados de la operación.</h2>
+    <p class="lead">El operador publica y confirma. El trabajador consulta su calendario y se postula. Lo que hagas en una vista se refleja en la otra.</p></div>
+    <a class="btn btn-primary" href="operador.html" id="cta2">Empezar como operador</a></div>
+  <div class="views">
+    <a class="view dark" href="operador.html">
+      <div><span class="pill acc">Vista del operador</span><h3 style="margin-top:14px">Eventos, turnos y asistencia en un solo panel.</h3>
+        <p>Crea eventos, convoca a tu equipo, revisa postulaciones con historial y calificación, registra horas y activa reemplazos de última hora.</p></div>
+      <div class="wcard"><div class="r"><strong>Cena de gala aniversario</strong><span class="pill dark">Hoy</span></div>
+        <div class="r"><span class="muted">Mesero/a · 17:00–01:00</span><span class="num"><strong>3</strong>/3</span></div>
+        <div class="r"><span class="muted">Supervisor de piso</span><span class="num"><strong>1</strong>/1</span></div></div>
+    </a>
+    <a class="view light" href="trabajador.html">
+      <div><span class="pill">Vista del trabajador</span><h3 style="margin-top:14px">Un calendario con las vacantes que son para ti.</h3>
+        <p>Filtra por rol, fecha, disponibilidad y zona, y postúlate en un clic. Tu perfil y tu historial son tuyos, no de la empresa.</p></div>
+      <div class="wcard"><strong style="font-size:18px">Mi disponibilidad</strong><span class="small muted">Turnos de fin de semana</span>
+        <div class="daychips" id="chips"></div></div>
+    </a>
+  </div>
+  <div class="reset"><span>Prototipo con datos de ejemplo de Barranquilla. Los cambios se guardan en este navegador.</span><button class="btn btn-sm" id="reset">Reiniciar datos de la demo</button></div>
+</section>
+<footer class="footer" style="margin-top:60px"><div><span>LogisYa</span><span>Se cobra solo al operador. Nunca al trabajador.</span></div></footer>
+
+<script src="logisya-data.js"></script>
+<script>
+$('#logo').innerHTML=LOGO+'LogisYa';
+$('#b1').innerHTML=I.check+'Gestión de personal para operadores de eventos';
+$('#b2').innerHTML=I.check+'Bolsa de talento <b>compartida</b> y recíproca';
+$('#cta1').insertAdjacentHTML('beforeend',I.arrow);$('#cta2').insertAdjacentHTML('beforeend',I.arrow);
+$('#eb').innerHTML=I.check+'Dos vistas';
+$('#mtile').innerHTML=I.users;
+$('#chips').innerHTML=[6,0,1,2,3,4,5].map(i=>`<button tabindex="-1" aria-pressed="${[6,0,5].includes(i)}">${DIAS_L[i]}</button>`).join('');
+const F=[['t1',I.users,'Convocatoria propia','Cada vacante se publica primero solo para tu equipo.'],
+         ['t2',I.check,'Confirmación clara','Sabes quién confirmó, quién falta y cuántos cupos quedan.'],
+         null,
+         ['t3',I.clock,'Horas verificables','Entrada, salida y calificación quedan registradas por evento.'],
+         ['t4',I.globe,'Bolsa compartida','Si el cupo no se llena, la vacante se abre sola al calendario general.']];
+$('#features').innerHTML=F.map(f=>f?`<div class="kcard"><span class="tile ${f[0]}">${f[1]}</span><div><div class="lab">${f[2]}</div><p>${f[3]}</p></div></div>`:'<div class="kcard fdisc" aria-hidden="true"><div class="disc"></div></div>').join('');
+function stats(){let c=0,t=0;DB.EVENTS.filter(e=>e.op==='op1'&&!isPast(e.fecha)).forEach(e=>e.vacantes.forEach(v=>{c+=conf(v);t+=v.cupos}));
+  $('#mcupos').textContent=`${c}/${t}`;$('#mpct').textContent=`${t?Math.round(c/t*100):0}%`}
+window.LY_render=stats;stats();
+$('#reset').addEventListener('click',()=>{resetDemo();stats();toast('Se restauraron los datos de ejemplo')});
+</script>

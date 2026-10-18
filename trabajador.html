@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LogisYa · Trabajador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="logisya.css">
+<style>
+.banner{position:relative;border-radius:28px;overflow:hidden;color:#fff;padding:36px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:24px;align-items:end;min-height:280px;
+  background:radial-gradient(55% 90% at 78% 20%,rgba(107,69,255,.42) 0%,transparent 60%),radial-gradient(45% 70% at 10% 100%,rgba(30,120,90,.35) 0%,transparent 65%),#060607}
+.banner::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.03) 0 2px,transparent 2px 14px);pointer-events:none}
+.banner>*{position:relative;z-index:1;min-width:0}
+.banner h1{font-size:clamp(1.9rem,3.6vw,2.6rem);letter-spacing:-.04em}
+.banner p{color:#C9C9D2;margin-top:12px;max-width:44ch}
+.next{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px 12px;font-size:13px}
+.sched{background:#fff;color:var(--ink);border-radius:18px;padding:18px;display:grid;gap:10px;box-shadow:0 20px 40px -20px rgba(0,0,0,.6)}
+.sched h3{font-size:20px}
+@media (max-width:820px){.banner{grid-template-columns:minmax(0,1fr);padding:24px}}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.cal .dh{font-size:11px;text-transform:uppercase;color:var(--muted);text-align:center;letter-spacing:.06em;font-weight:600;padding-bottom:2px}
+.cal button{aspect-ratio:1/1;max-width:100%;border:0;background:var(--card);border-radius:10px;cursor:pointer;display:grid;place-items:center;position:relative;font-variant-numeric:tabular-nums;font-size:14px;padding:0;color:var(--ink)}
+.cal button.off{visibility:hidden}
+.cal button.unavail{color:var(--faint)}
+.cal button.has{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.cal button.has::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.cal button.today{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cal button.sel{background:var(--accent);color:#fff} .cal button.sel::after{background:#fff}
+.vcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:grid;gap:10px}
+.vcard.urgent{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-bg)}
+.vcard h3{font-size:16px;font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta svg{width:13px;height:13px}
+.price{font-weight:600;font-size:17px;letter-spacing:-.02em}
+.alert{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<header class="nav" id="nav"></header>
+<main class="page" id="app"></main>
+<footer class="footer"><div><span>LogisYa · prototipo con datos de ejemplo</span><span>Registrarte y postularte es gratis. Ningún operador te puede cobrar por usar LogisYa.</span></div></footer>
+<dialog id="dlg"></dialog>
+<script src="logisya-data.js"></script>
+<script>
+const S={view:'calendario',wid:pref('wid')||'w1',f:{rol:'',zona:'',disp:false,fecha:''},cal:{y:2026,m:9}};
+if(!W_(S.wid))S.wid='w1';
+const TABS=[['calendario','Calendario'],['mis','Mis postulaciones'],['perfil','Mi perfil']];
+
+function render(){
+  tick();
+  if(!W_(S.wid))S.wid='w1';
+  const w=W_(S.wid);
+  const sel=`<select id="who" aria-label="Ver como">${DB.WORKERS.map(x=>`<option value="${x.id}" ${x.id===S.wid?'selected':''}>${esc(x.nombre)}</option>`).join('')}<option value="__new">+ Registrarme con invitación</option></select>`;
+  $('#nav').innerHTML=appNav({tabs:TABS,active:S.view,selectHtml:sel,otherHref:'operador.html',otherLabel:'Vista operador'});
+  $('#app').innerHTML=urgentes(w)+(S.view==='calendario'?vCal(w):S.view==='mis'?vMis(w):vPerfil(w));
+}
+window.LY_render=render;
+function commit(){save();render()}
+
+function urgentes(w){
+  const out=[];DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>{if(v.reemplazo&&v.reemplazo.notificados.includes(w.id)&&!v.postulaciones.some(p=>p.wid===w.id)&&conf(v)<v.cupos&&!isPast(e.fecha))out.push([e,v])}));
+  return out.map(([e,v])=>`<div class="alert"><span><strong>Reemplazo urgente.</strong> ${esc(OP(e.op).nombre)} necesita ${esc(v.rol)} ${isToday(e.fecha)?'hoy':fdate(e.fecha)} en ${esc(e.lugar)}, <span class="num">${v.ini}–${v.fin}</span>, ${cop(v.tarifa)}.</span>
+    <button class="btn btn-primary btn-sm" data-act="postular" data-e="${e.id}" data-v="${v.id}">Postularme ${I.arrow}</button></div>`).join('');
+}
+function proximoTurno(w){
+  const c=[];DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>{if(!isPast(e.fecha)&&v.postulaciones.some(p=>p.wid===w.id&&p.estado==='confirmado'))c.push([e,v])}));
+  c.sort((a,b)=>a[0].fecha.localeCompare(b[0].fecha));return c[0];
+}
+function banner(w){
+  const n=proximoTurno(w);
+  return `<section class="banner">
+    <div><span class="eyebrow" style="color:#C7B6FF">${I.check} Tu calendario de eventos</span>
+      <h1 style="margin-top:10px">Hola, ${esc(w.nombre.split(' ')[0])}.<br>Elige tus turnos.</h1>
+      <p>Mira las oportunidades por fecha, filtra por tu rol y tu zona, y postúlate directamente. El operador confirma la selección.</p>
+      ${n?`<div class="next"><span class="pill ok">Próximo turno</span><span>${esc(n[1].rol)} · ${esc(n[0].nombre)} · ${isToday(n[0].fecha)?'hoy':fdate(n[0].fecha)} <span class="num">${n[1].ini}</span></span></div>`:''}</div>
+    <div class="sched"><h3>Mi disponibilidad</h3><span class="small muted">Los días marcados se usan para filtrar vacantes y para avisarte de reemplazos.</span>
+      <div class="daychips">${[6,0,1,2,3,4,5].map(i=>`<button data-act="dia" data-v="${i}" aria-pressed="${w.disp.includes(i)}">${DIAS_L[i]}</button>`).join('')}</div></div>
+  </section>`;
+}
+function oportunidades(w,ignoreFecha){
+  const out=[];
+  DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>{
+    if(!visible(e,v,w))return;
+    if(S.f.rol?v.rol!==S.f.rol:!w.roles.includes(v.rol))return;
+    if(S.f.zona&&e.zona!==S.f.zona)return;
+    if(S.f.disp&&!w.disp.includes(D(e.fecha).getDay()))return;
+    if(!ignoreFecha&&S.f.fecha&&e.fecha!==S.f.fecha)return;
+    out.push([e,v])}));
+  return out.sort((a,b)=>a[0].fecha.localeCompare(b[0].fecha));
+}
+function vcard(e,v,w){
+  const p=v.postulaciones.find(p=>p.wid===w.id),left=v.cupos-conf(v),org=origenPara(e,v,w);
+  const badge={reemplazo:'<span class="pill bad">Reemplazo urgente</span>',propio:v.fase==='propio'?'<span class="pill acc">Te convocaron</span>':'<span class="pill">Tu operador</span>',bolsa:'<span class="pill ok">Calendario general</span>'}[org];
+  let act;
+  if(p)act=p.estado==='pendiente'?'<span class="pill warn">Postulación enviada</span>':estadoPill(p.estado);
+  else if(left<=0)act='<span class="pill">Cupo completo</span>';
+  else if(!w.roles.includes(v.rol))act='<span class="small muted">Este rol no está en tu perfil</span>';
+  else act=`<button class="btn btn-primary btn-sm" data-act="postular" data-e="${e.id}" data-v="${v.id}">Postularme ${I.arrow}</button>`;
+  return `<article class="vcard ${org==='reemplazo'&&!p?'urgent':''}">
+    <div class="row between"><h3>${esc(v.rol)} · ${esc(e.nombre)}</h3>${badge}</div>
+    <div class="meta"><span>${I.users}${esc(OP(e.op).nombre)}</span><span>${I.cal}${fdate(e.fecha)}</span><span>${I.clock}<span class="num">${v.ini}–${v.fin}</span></span><span>${I.pin}${esc(e.lugar)}, ${esc(e.zona)}</span></div>
+    <div class="row between"><span><span class="price num">${cop(v.tarifa)}</span> <span class="small muted">por turno · ${left>0?left+' cupo(s) libre(s)':'sin cupos'}</span></span>${act}</div></article>`;
+}
+function vCal(w){
+  const {y,m}=S.cal,first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();
+  const byDate={};oportunidades(w,true).forEach(([e])=>byDate[e.fecha]=(byDate[e.fecha]||0)+1);
+  let cells=DIAS.map(d=>`<div class="dh">${d}</div>`).join('');
+  for(let i=0;i<first.getDay();i++)cells+='<button class="off" tabindex="-1" aria-hidden="true"></button>';
+  for(let d=1;d<=days;d++){const ds=iso(new Date(y,m,d)),n=byDate[ds]||0,dow=new Date(y,m,d).getDay();
+    cells+=`<button data-act="fecha" data-v="${ds}" class="${n?'has':''} ${S.f.fecha===ds?'sel':''} ${isToday(ds)?'today':''} ${w.disp.includes(dow)?'':'unavail'}" aria-label="${d} de ${MESES[m]}${n?`, ${n} vacante(s)`:''}">${d}</button>`}
+  const list=oportunidades(w,false);
+  return banner(w)+`<div class="grid2">
+   <div class="panel" style="gap:14px">
+     <div class="row between"><button class="btn btn-soft btn-sm" data-act="mes" data-v="-1" aria-label="Mes anterior">‹</button><h3 style="text-transform:capitalize;font-size:17px">${MESES[m]} ${y}</h3><button class="btn btn-soft btn-sm" data-act="mes" data-v="1" aria-label="Mes siguiente">›</button></div>
+     <div class="cal">${cells}</div>
+     <span class="small muted">Los días en morado tienen vacantes para ti. Los grises no están en tu disponibilidad.</span>
+     <label class="field">Rol<select id="f-rol"><option value="">Mis roles</option>${ROLES.map(r=>`<option ${r===S.f.rol?'selected':''}>${r}</option>`).join('')}</select></label>
+     <label class="field">Ubicación<select id="f-zona"><option value="">Barranquilla y área metropolitana</option>${ZONAS.map(z=>`<option ${z===S.f.zona?'selected':''}>${z}</option>`).join('')}</select></label>
+     <label class="check"><input type="checkbox" id="f-disp" ${S.f.disp?'checked':''}> Solo días en que estoy disponible</label>
+   </div>
+   <div class="stack">
+     <div class="row between"><div><span class="eyebrow">${I.check} Oportunidades</span><h2 class="h2" style="margin-top:6px">${S.f.fecha?fdate(S.f.fecha):'Próximos eventos'}<span class="soft"> · ${list.length}</span></h2></div>
+       ${S.f.fecha?'<button class="btn btn-soft btn-sm" data-act="fecha" data-v="">Ver todas las fechas</button>':''}</div>
+     ${list.map(([e,v])=>vcard(e,v,w)).join('')||'<p class="note">No hay vacantes con esos filtros. Prueba otra fecha, otra zona o quita el filtro de disponibilidad.</p>'}
+   </div></div>`;
+}
+function vMis(w){
+  const rows=[];DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>{const p=v.postulaciones.find(p=>p.wid===w.id);if(p)rows.push([e,v,p])}));
+  rows.sort((a,b)=>a[0].fecha.localeCompare(b[0].fecha));
+  const confirmados=rows.filter(r=>r[2].estado==='confirmado').length,pend=rows.filter(r=>r[2].estado==='pendiente').length;
+  return `<div class="page-head"><div><span class="eyebrow">${I.check} Mis postulaciones</span>
+     <h1 class="h1" style="margin-top:10px">Tus turnos<span class="soft" style="display:block">confirmados y pendientes</span></h1></div></div>
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+     <div class="kcard"><span class="tile t3">${I.check}</span><div class="lab">Confirmados</div><div class="num">${confirmados}</div></div>
+     <div class="kcard"><span class="tile t1">${I.clock}</span><div class="lab">En revisión</div><div class="num">${pend}</div></div>
+     <div class="kcard"><span class="tile t4">${I.star}</span><div class="lab">Mi calificación</div><div class="num">${rating(w).toFixed(1)}</div></div></div>
+   <div class="panel">${rows.length?`<div class="tbl"><table><thead><tr><th>Fecha</th><th>Evento</th><th>Rol y turno</th><th>Operador</th><th>Pago</th><th>Estado</th><th>Horas</th></tr></thead><tbody>
+    ${rows.map(([e,v,p])=>{const a=v.asistencia[w.id];return `<tr><td class="num" style="white-space:nowrap">${fdate(e.fecha)}</td><td>${esc(e.nombre)}</td><td>${esc(v.rol)} <span class="num small muted">${v.ini}–${v.fin}</span></td><td class="small">${esc(OP(e.op).nombre)}</td><td class="num">${cop(v.tarifa)}</td><td>${estadoPill(p.estado)}</td><td class="num">${a&&a.sal?horas(a.ent,a.sal).toFixed(1):'—'}</td></tr>`}).join('')}
+    </tbody></table></div>`:'<p class="note">Aún no te has postulado. Busca oportunidades en el calendario.</p>'}</div>`;
+}
+function vPerfil(w){
+  return `<div class="page-head"><div><span class="eyebrow">${I.check} Mi perfil</span>
+     <h1 class="h1" style="margin-top:10px">${esc(w.nombre)}<span class="soft" style="display:block">${w.roles.map(esc).join(' · ')}</span></h1></div></div>
+   <div class="kpis">
+     <div class="kcard"><span class="tile t4">${I.star}</span><div class="lab">Calificación</div><div class="num">${rating(w).toFixed(1)}</div></div>
+     <div class="kcard"><span class="tile t3">${I.check}</span><div class="lab">Asistencia</div><div class="num">${w.asis}%</div></div>
+     <div class="kcard"><span class="tile t1">${I.cal}</span><div class="lab">Eventos trabajados</div><div class="num">${w.eventos}</div></div>
+     <div class="kcard"><span class="tile t2">${I.pin}</span><div class="lab">Zona</div><div class="sub" style="font-size:15px;color:var(--ink)">${esc(w.zona)}</div></div></div>
+   <div class="grid2">
+    <div class="stack">
+     <div class="kcard"><span class="tile t4">${I.globe}</span>
+       <label class="switch"><input type="checkbox" id="enBolsa" ${w.enBolsa?'checked':''}><span><strong>Aparecer en la bolsa compartida</strong><br><span class="small muted">Otros operadores podrán ver tu historial y calificaciones, y te llegarán vacantes del calendario general.</span></span></label></div>
+     <div class="kcard"><span class="tile t1">${I.shield}</span><div><div class="lab">Autorización de datos</div><div class="sub">Otorgada el ${fdate(w.desde)} al registrarte. Tus datos son tuyos: puedes consultarlos, corregirlos o retirar la autorización cuando quieras (Ley 1581 de 2012).</div></div></div>
+     <div class="kcard"><span class="tile t2">${I.users}</span><div><div class="lab">Operadores que me invitaron</div></div><div class="row">${w.ops.map(o=>`<span class="pill">${esc(OP(o).nombre)}</span>`).join('')}</div></div>
+    </div>
+    <div class="panel"><h3>Historial verificado</h3>${histTable(w)}</div></div>`;
+}
+
+/* ---------- Registro por invitación ---------- */
+const dlg=$('#dlg');
+function openRegistro(){
+  dlg.innerHTML=`<form class="dlg" id="freg"><div><span class="eyebrow">${I.check} Invitación de ${esc(OP('op1').nombre)}</span><h2 class="h2" style="margin-top:6px">Crea tu perfil en LogisYa</h2></div>
+   <label class="field">Nombre completo<input type="text" id="r-nombre" required placeholder="Ej. Laura Gutiérrez"></label>
+   <div class="field">Roles en los que trabajas<div class="row" style="gap:6px 14px">${ROLES.map((r,i)=>`<label class="check small" style="font-weight:400"><input type="checkbox" name="r-rol" value="${r}" id="r-rol-${i}" ${i===0?'checked':''}> ${r}</label>`).join('')}</div></div>
+   <label class="field">Zona donde vives<select id="r-zona">${ZONAS.map(z=>`<option>${z}</option>`).join('')}</select></label>
+   <label class="check small"><input type="checkbox" id="r-bolsa" checked> Quiero aparecer en la bolsa compartida de talento</label>
+   <label class="check small"><input type="checkbox" id="r-ley" required> Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 y la política de privacidad de LogisYa.</label>
+   <div class="row between"><span class="small muted">Registrarte es gratis.</span><div class="row"><button class="btn btn-soft" type="button" data-act="close">Cancelar</button><button class="btn btn-primary" type="submit">Crear mi perfil ${I.arrow}</button></div></div></form>`;
+  dlg.showModal();
+}
+
+/* ---------- Interacción ---------- */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,d=b.dataset;
+  if(a==='view'){S.view=d.v;window.scrollTo(0,0);render();return}
+  if(a==='fecha'){S.f.fecha=d.v;render();return}
+  if(a==='mes'){let m=S.cal.m+ +d.v,y=S.cal.y;if(m<0){m=11;y--}if(m>11){m=0;y++}S.cal={y,m};render();return}
+  if(a==='close'){dlg.close();return}
+  if(a==='adv'){DB.offsetH+=6;toast('El reloj de la demo avanzó 6 horas')}
+  else if(a==='postular'){const[e,v]=findV(d.e,d.v),w=W_(S.wid);if(!v.postulaciones.some(p=>p.wid===w.id)){v.postulaciones.push({wid:w.id,estado:'pendiente',origen:origenPara(e,v,w),at:now().getTime()});toast(`Te postulaste como ${v.rol}. ${OP(e.op).nombre} revisará tu perfil.`)}}
+  else if(a==='dia'){const w=W_(S.wid),i=+d.v;w.disp=w.disp.includes(i)?w.disp.filter(x=>x!==i):[...w.disp,i].sort()}
+  else return;
+  commit();
+});
+document.addEventListener('change',ev=>{const t=ev.target;
+  if(t.id==='who'){if(t.value==='__new'){t.value=S.wid;openRegistro();return}S.wid=t.value;pref('wid',t.value);render()}
+  else if(t.id==='f-rol'){S.f.rol=t.value;render()}
+  else if(t.id==='f-zona'){S.f.zona=t.value;render()}
+  else if(t.id==='f-disp'){S.f.disp=t.checked;render()}
+  else if(t.id==='enBolsa'){W_(S.wid).enBolsa=t.checked;toast(t.checked?'Ahora apareces en la bolsa compartida':'Saliste de la bolsa compartida');commit()}
+});
+document.addEventListener('submit',ev=>{ev.preventDefault();const f=ev.target;if(f.id!=='freg')return;
+  const roles=[...f.querySelectorAll('input[name=r-rol]:checked')].map(i=>i.value);
+  if(!roles.length){toast('Elige al menos un rol');return}
+  const w={id:nid('w'),nombre:$('#r-nombre').value.trim(),roles,zona:$('#r-zona').value,disp:[0,5,6],ratings:[5],eventos:0,asis:100,ops:['op1'],enBolsa:$('#r-bolsa').checked,desde:iso(now()),presentes:0,ausentes:0};
+  DB.WORKERS.push(w);S.wid=w.id;pref('wid',w.id);S.view='perfil';dlg.close();toast('Perfil creado. Ya haces parte del equipo de '+OP('op1').nombre);commit()});
+render();
+if(location.hash==='#registro')openRegistro();
+</script>
+</body>
+</html>

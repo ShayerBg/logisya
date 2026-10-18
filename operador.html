@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LogisYa · Operador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="logisya.css">
+<style>
+.evlist{display:grid;gap:6px}
+.evitem{display:grid;grid-template-columns:50px minmax(0,1fr);gap:12px;align-items:center;text-align:left;border:1px solid transparent;background:#fff;border-radius:14px;padding:9px 10px;cursor:pointer;transition:border-color .15s}
+.evitem:hover{border-color:var(--line)}
+.evitem[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.datebox{text-align:center;border-radius:10px;background:var(--card);padding:5px 0;line-height:1.1}
+.datebox span{display:block;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;font-weight:600}
+.datebox b{font-size:19px;font-weight:600;letter-spacing:-.03em}
+.evitem.today .datebox{background:var(--ink);color:#fff}
+.evitem.today .datebox span{color:#C9C9D0}
+.ev-head{display:grid;gap:6px;padding-bottom:4px}
+.vac{background:var(--card);border-radius:18px;padding:18px;display:grid;gap:14px;min-width:0}
+.vac .note{background:#fff}
+.vac-top{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center}
+.vacrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end;background:var(--card);padding:14px;border-radius:16px}
+.bolsa-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.bolsa-head select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+</style>
+</head>
+<body>
+<header class="nav" id="nav"></header>
+<main class="page" id="app"></main>
+<footer class="footer"><div><span>LogisYa · prototipo con datos de ejemplo</span><span>Los cambios se guardan en este navegador y se reflejan en la vista del trabajador.</span></div></footer>
+<dialog id="dlg"></dialog>
+<script src="logisya-data.js"></script>
+<script>
+const S={view:'eventos',ev:'e0',opId:pref('op')||'op1',bolsaTab:'mios',bolsaRol:'',draft:null};
+if(!OP(S.opId))S.opId='op1';
+const TABS=[['eventos','Eventos'],['crear','Crear evento'],['bolsa','Personal y bolsa']];
+
+function render(){
+  tick().filter(m=>m.op===S.opId).forEach(m=>toast(m.msg));
+  const sel=`<select id="who" aria-label="Operador">${Object.values(DB.OPS).map(o=>`<option value="${o.id}" ${o.id===S.opId?'selected':''}>${esc(o.nombre)}</option>`).join('')}</select>`;
+  $('#nav').innerHTML=appNav({tabs:TABS,active:S.view,selectHtml:sel,otherHref:'trabajador.html',otherLabel:'Vista trabajador'});
+  $('#app').innerHTML=S.view==='eventos'?vEventos():S.view==='crear'?vCrear():vBolsa();
+}
+window.LY_render=render;
+function commit(){save();render()}
+
+/* ---------- Eventos ---------- */
+function kpis(evs){
+  let cupos=0,c=0,pres=0,aus=0,hrs=0,post=0;
+  evs.forEach(e=>e.vacantes.forEach(v=>{cupos+=v.cupos;c+=conf(v);post+=v.postulaciones.length;
+    Object.values(v.asistencia).forEach(a=>{if(a.estado==='presente')pres++;if(a.estado==='ausente')aus++;hrs+=horas(a.ent,a.sal)})}));
+  const pct=cupos?Math.round(c/cupos*100):0,ausp=(pres+aus)?Math.round(aus/(pres+aus)*100):0;
+  const k=(t,ic,lab,num,sub)=>`<div class="kcard"><span class="tile ${t}">${ic}</span><div><div class="lab">${lab}</div><div class="sub">${sub}</div></div><div class="num">${num}</div></div>`;
+  return `<div class="kpis">
+    ${k('t1',I.cal,'Eventos próximos',evs.filter(e=>!isPast(e.fecha)).length,'Incluye los de hoy')}
+    ${k('t4',I.users,'Cupos cubiertos',`${c}/${cupos}`,`${pct}% de cobertura`)}
+    ${k('t5',I.swap,'Ausentismo',`${ausp}%`,`${aus} de ${pres+aus} registros`)}
+    ${k('t3',I.clock,'Horas registradas',hrs.toFixed(1),`${post} postulaciones recibidas`)}</div>`;
+}
+function vEventos(){
+  const op=OP(S.opId);
+  const evs=DB.EVENTS.filter(e=>e.op===S.opId).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(!evs.find(e=>e.id===S.ev))S.ev=evs[0]?.id;
+  const e=EV(S.ev);
+  const list=evs.map(x=>{const d=D(x.fecha),tc=x.vacantes.reduce((a,v)=>a+v.cupos,0),cc=x.vacantes.reduce((a,v)=>a+conf(v),0);
+    return `<button class="evitem ${isToday(x.fecha)?'today':''}" data-act="ev" data-v="${x.id}" aria-current="${x.id===S.ev}">
+      <span class="datebox"><span>${DIAS[d.getDay()]}</span><b class="num">${d.getDate()}</b><span>${MESES[d.getMonth()].slice(0,3)}</span></span>
+      <span style="min-width:0"><strong style="display:block;font-weight:600;overflow-wrap:anywhere">${esc(x.nombre)}</strong>
+      <span class="small muted">${esc(x.lugar)} · <span class="num">${cc}/${tc}</span> cupos</span></span></button>`}).join('');
+  return `<div class="page-head"><div><span class="eyebrow">${I.check} Panel del operador</span>
+      <h1 class="h1" style="margin-top:10px">${esc(op.nombre)}<span class="soft" style="display:block">Eventos y personal</span></h1></div>
+      <button class="btn btn-primary" data-act="view" data-v="crear">Nuevo evento ${I.arrow}</button></div>
+    ${kpis(evs)}
+    <div class="grid2">
+      <div class="side"><div class="row between" style="padding:4px 6px 6px"><strong>Mis eventos</strong><span class="small muted">${evs.length}</span></div>
+        <div class="evlist">${list||'<p class="note">Aún no tienes eventos. Crea el primero.</p>'}</div></div>
+      <div class="panel">${e?detalle(e):'<p class="note">Selecciona un evento de la lista.</p>'}</div></div>`;
+}
+function faseHtml(v){
+  if(v.fase==='general')return '<span class="pill ok">Calendario general</span>';
+  if(v.bloqueada)return '<span class="pill bad">Plazo vencido · no compartes tu personal</span>';
+  return `<span class="pill acc">Solo mi personal · abre al general en ${hrsLeft(v.cierre)}</span>`;
+}
+function detalle(e){
+  const today=isToday(e.fecha);
+  return `<div class="ev-head"><div class="row between"><h2 class="h2" style="font-size:1.6rem">${esc(e.nombre)}</h2>${today?'<span class="pill dark">Hoy</span>':''}</div>
+    <span class="muted row" style="gap:6px"><span style="width:14px;height:14px;display:inline-flex">${I.pin}</span>${fdate(e.fecha)} · ${esc(e.lugar)} · ${esc(e.zona)}</span></div>
+    ${e.vacantes.map(v=>vacante(e,v,today)).join('')}`;
+}
+function vacante(e,v,today){
+  const c=conf(v),pct=Math.min(100,Math.round(c/v.cupos*100)),op=OP(e.op);
+  const rows=v.postulaciones.filter(p=>p.estado!=='rechazado').map(p=>{const w=W_(p.wid);
+    const org={propio:'<span class="pill">Mi personal</span>',bolsa:'<span class="pill acc">Bolsa</span>',reemplazo:'<span class="pill bad">Reemplazo</span>'}[p.origen];
+    const act=p.estado==='pendiente'?`<div class="row" style="flex-wrap:nowrap"><button class="btn btn-primary btn-sm" data-act="confirm" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}" ${c>=v.cupos?'disabled title="Cupo completo"':''}>Confirmar</button><button class="btn btn-sm" data-act="reject" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Descartar</button></div>`:'';
+    return `<tr><td><button class="link" data-act="perfil" data-w="${w.id}">${esc(w.nombre)}</button></td><td>${org}</td><td style="white-space:nowrap">${stars(rating(w))}</td><td class="num">${w.asis}%</td><td class="num">${w.eventos}</td><td>${estadoPill(p.estado)}</td><td>${act}</td></tr>`}).join('');
+  const btns=v.fase==='propio'&&!isPast(e.fecha)?`<button class="btn btn-sm btn-white" data-act="convocar" data-e="${e.id}" data-v="${v.id}">Convocar a mi personal</button>
+     ${op.compartir?`<button class="btn btn-sm btn-white" data-act="abrir" data-e="${e.id}" data-v="${v.id}">Abrir ya al calendario general</button>`:''}`:'';
+  let rem='';
+  if(v.reemplazo){const ns=v.reemplazo.notificados.map(W_);
+    rem=`<div class="alert"><strong>Reemplazo de última hora.</strong> ${esc(W_(v.reemplazo.por).nombre)} quedó como ausente (${fdt(v.reemplazo.inicio)}). ${ns.length?`Se notificó a ${ns.length} persona(s) con perfil de ${esc(v.rol)}: ${ns.map(w=>esc(w.nombre)).join(', ')}. Sus postulaciones aparecen abajo.`:'No se encontró personal disponible con ese perfil.'}</div>`}
+  let asis='';
+  const confs=v.postulaciones.filter(p=>p.estado==='confirmado'||p.estado==='ausente');
+  if(today&&confs.length){
+    asis=`<div class="stack" style="gap:8px"><span class="label">Registro de asistencia y horas</span><div class="tbl"><table>
+      <thead><tr><th>Persona</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Calificación</th><th></th></tr></thead><tbody>
+      ${confs.map(p=>{const w=W_(p.wid);const a=v.asistencia[w.id]||(v.asistencia[w.id]={ent:'',sal:'',estado:'pendiente',cal:0});
+        if(a.estado==='ausente')return `<tr><td>${esc(w.nombre)}</td><td colspan="5"><span class="pill bad">Ausente</span></td></tr>`;
+        const k=`${e.id}|${v.id}|${w.id}`;
+        return `<tr><td>${esc(w.nombre)}</td>
+        <td><input type="time" id="ent-${k}" data-k="${k}" data-f="ent" value="${a.ent}" aria-label="Entrada de ${esc(w.nombre)}"></td>
+        <td><input type="time" id="sal-${k}" data-k="${k}" data-f="sal" value="${a.sal}" aria-label="Salida de ${esc(w.nombre)}"></td>
+        <td class="num">${horas(a.ent,a.sal).toFixed(1)}</td>
+        <td><select id="cal-${k}" data-k="${k}" data-f="cal" ${a.sal?'':'disabled title="Disponible al registrar la salida"'} aria-label="Calificación de ${esc(w.nombre)}">${[0,1,2,3,4,5].map(i=>`<option value="${i}" ${a.cal===i?'selected':''}>${i?i+' ★':'—'}</option>`).join('')}</select></td>
+        <td>${a.ent?'':`<button class="btn btn-danger btn-sm" data-act="ausente" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Marcar ausente</button>`}</td></tr>`}).join('')}
+      </tbody></table></div></div>`;
+  } else if(!today&&!isPast(e.fecha)&&c) asis='<p class="note">El registro de entrada, salida y calificación se habilita el día del evento.</p>';
+  return `<div class="vac">
+    <div class="vac-top"><div><h3 style="font-size:17px">${esc(v.rol)}</h3><span class="small muted"><span class="num">${v.ini}–${v.fin}</span> · ${cop(v.tarifa)} por turno</span></div>
+      <div class="row"><div class="meter" role="img" aria-label="${c} de ${v.cupos} cupos cubiertos"><i style="width:${pct}%"></i></div><span class="num small"><strong>${c}</strong>/${v.cupos}</span></div></div>
+    <div class="vac-top">${faseHtml(v)}<div class="row">${btns}</div></div>
+    ${v.fase==='propio'&&v.convocados.length?`<span class="small muted">Convocadas ${v.convocados.length} persona(s) de tu equipo</span>`:''}
+    ${rem}
+    ${rows?`<div class="tbl"><table><thead><tr><th>Postulante</th><th>Origen</th><th>Calif.</th><th>Asistencia</th><th>Eventos</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="note">Todavía no hay postulaciones para esta vacante.</p>'}
+    ${asis}</div>`;
+}
+
+/* ---------- Crear evento ---------- */
+function newDraft(){const d=now();d.setDate(d.getDate()+14);return {nombre:'',fecha:iso(d),lugar:'',zona:ZONAS[0],plazo:48,convocar:true,vacs:[{rol:ROLES[0],ini:'18:00',fin:'23:00',cupos:2,tarifa:110000}]}}
+function vCrear(){
+  if(!S.draft)S.draft=newDraft();const d=S.draft;
+  return `<div class="page-head"><div><span class="eyebrow">${I.check} Nuevo evento</span>
+     <h1 class="h1" style="margin-top:10px">Crea el evento<span class="soft" style="display:block">y define sus turnos</span></h1>
+     <p class="lead">Cada vacante se publica primero solo para tu personal. Si no se llena dentro del plazo, pasa sola al calendario general de la bolsa compartida.</p></div></div>
+  <form class="panel" id="fcrear" style="max-width:900px">
+    <div class="formgrid">
+      <label class="field" style="grid-column:1/-1">Nombre del evento<input type="text" id="d-nombre" data-d="nombre" value="${esc(d.nombre)}" placeholder="Ej. Lanzamiento de producto en Riomar"></label>
+      <label class="field">Fecha<input type="date" id="d-fecha" data-d="fecha" value="${d.fecha}"></label>
+      <label class="field">Lugar<input type="text" id="d-lugar" data-d="lugar" value="${esc(d.lugar)}" placeholder="Ej. Centro de Eventos Puerta de Oro"></label>
+      <label class="field">Zona<select id="d-zona" data-d="zona">${ZONAS.map(z=>`<option ${z===d.zona?'selected':''}>${z}</option>`).join('')}</select></label>
+      <label class="field">Plazo solo para mi personal<select id="d-plazo" data-d="plazo">${[12,24,48,72].map(n=>`<option value="${n}" ${+d.plazo===n?'selected':''}>${n} horas</option>`).join('')}</select></label>
+    </div>
+    <span class="label">Roles y turnos</span>
+    ${d.vacs.map((v,i)=>`<div class="vacrow">
+      <label class="field">Rol<select id="dv-rol-${i}" data-dv="${i}" data-f="rol">${ROLES.map(r=>`<option ${r===v.rol?'selected':''}>${r}</option>`).join('')}</select></label>
+      <label class="field">Inicio<input type="time" id="dv-ini-${i}" data-dv="${i}" data-f="ini" value="${v.ini}"></label>
+      <label class="field">Fin<input type="time" id="dv-fin-${i}" data-dv="${i}" data-f="fin" value="${v.fin}"></label>
+      <label class="field">Cupos<input type="number" min="1" id="dv-cupos-${i}" data-dv="${i}" data-f="cupos" value="${v.cupos}"></label>
+      <label class="field">Pago por turno (COP)<input type="number" min="0" step="5000" id="dv-tarifa-${i}" data-dv="${i}" data-f="tarifa" value="${v.tarifa}"></label>
+      ${d.vacs.length>1?`<button type="button" class="btn btn-danger btn-sm" data-act="delvac" data-i="${i}">Quitar</button>`:''}</div>`).join('')}
+    <div><button type="button" class="btn btn-soft btn-sm" data-act="addvac">+ Agregar rol</button></div>
+    <label class="check"><input type="checkbox" id="d-conv" data-d="convocar" ${d.convocar?'checked':''}> Convocar ahora a mi personal registrado con esos roles</label>
+    <div class="row between"><span class="small muted">El pago lo define y lo hace el operador. LogisYa no cobra al trabajador ni toma margen.</span><button class="btn btn-primary" type="submit">Publicar evento ${I.arrow}</button></div>
+  </form>`;
+}
+
+/* ---------- Personal y bolsa ---------- */
+function vBolsa(){
+  const op=OP(S.opId);
+  const mios=DB.WORKERS.filter(w=>w.ops.includes(op.id));
+  const otros=DB.WORKERS.filter(w=>!w.ops.includes(op.id)&&w.enBolsa&&w.ops.some(o=>OP(o).compartir));
+  const fr=w=>!S.bolsaRol||w.roles.includes(S.bolsaRol);
+  const tabla=ws=>`<div class="tbl"><table><thead><tr><th>Nombre</th><th>Roles</th><th>Zona</th><th>Calif.</th><th>Asistencia</th><th>Eventos</th></tr></thead><tbody>
+    ${ws.filter(fr).map(w=>`<tr><td><button class="link" data-act="perfil" data-w="${w.id}">${esc(w.nombre)}</button></td><td class="small">${w.roles.map(esc).join(', ')}</td><td class="small">${esc(w.zona)}</td><td style="white-space:nowrap">${stars(rating(w))}</td><td class="num">${w.asis}%</td><td class="num">${w.eventos}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">Nadie con ese rol.</td></tr>'}
+    </tbody></table></div>`;
+  const lista=S.bolsaTab==='mios'?tabla(mios):op.compartir?tabla(otros):'<p class="note">Activa “Compartir mi personal” para consultar perfiles, historial y calificaciones de otros operadores.</p>';
+  return `<div class="page-head"><div><span class="eyebrow">${I.check} Personal y bolsa</span>
+     <h1 class="h1" style="margin-top:10px">Tu equipo<span class="soft" style="display:block">y la bolsa compartida</span></h1></div></div>
+   <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+     <div class="kcard"><span class="tile t1">${I.users}</span><div><div class="lab">Invitar a mi personal</div><div class="sub">Comparte el enlace por WhatsApp. Cada persona crea su propio perfil y autoriza el tratamiento de sus datos (Ley 1581 de 2012). El perfil es de la persona, no de la empresa.</div></div>
+       <div class="copybox" style="background:#fff"><code id="invite">${op.invite}</code><button class="btn btn-sm btn-dark" data-act="copy">Copiar</button></div></div>
+     <div class="kcard"><span class="tile t4">${I.globe}</span><div><div class="lab">Bolsa compartida</div><div class="sub">El acceso es recíproco: para ver el personal de otras empresas, y para que tus vacantes lleguen al calendario general, debes compartir el tuyo.</div></div>
+       <label class="switch"><input type="checkbox" id="recip" ${op.compartir?'checked':''}><span><strong>Compartir mi personal</strong><br><span class="small muted">Solo quienes aceptaron estar en la bolsa.</span></span></label></div>
+   </div>
+   <div class="panel">
+     <div class="seg" role="group" aria-label="Lista de personal">
+       <button data-act="btab" data-v="mios" aria-pressed="${S.bolsaTab==='mios'}"><span class="tile t2">${I.users}</span>Mi personal · ${mios.length}</button>
+       <button data-act="btab" data-v="otros" aria-pressed="${S.bolsaTab==='otros'}"><span class="tile t4">${I.globe}</span>Otros operadores · ${op.compartir?otros.length:'bloqueado'}</button></div>
+     <div class="bolsa-head"><span class="small muted">Haz clic en un nombre para ver su historial verificado.</span>
+       <select id="bolsaRol" aria-label="Filtrar por rol"><option value="">Todos los roles</option>${ROLES.map(r=>`<option ${r===S.bolsaRol?'selected':''}>${r}</option>`).join('')}</select></div>
+     ${lista}</div>`;
+}
+
+/* ---------- Perfil ---------- */
+const dlg=$('#dlg');
+function openPerfil(id){const w=W_(id);
+  dlg.innerHTML=`<div class="dlg"><div class="row between"><div><span class="eyebrow">${I.check} Perfil verificado</span><h2 class="h2" style="margin-top:6px">${esc(w.nombre)}</h2></div><button class="btn btn-soft btn-sm" data-act="close">Cerrar</button></div>
+   <span class="muted small">${w.roles.map(esc).join(' · ')} · ${esc(w.zona)} · disponible ${w.disp.map(i=>DIAS[i]).join(', ')}</span>
+   <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+     <div class="kcard"><span class="lab small">Calificación</span><span class="num">${rating(w).toFixed(1)}</span></div>
+     <div class="kcard"><span class="lab small">Asistencia</span><span class="num">${w.asis}%</span></div>
+     <div class="kcard"><span class="lab small">Eventos</span><span class="num">${w.eventos}</span></div></div>
+   <span class="label">Historial reciente</span>${histTable(w)}</div>`;
+  dlg.showModal();
+}
+
+/* ---------- Interacción ---------- */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,d=b.dataset;
+  if(a==='view'){S.view=d.v;window.scrollTo(0,0);render();return}
+  if(a==='ev'){S.ev=d.v;render();return}
+  if(a==='btab'){S.bolsaTab=d.v;render();return}
+  if(a==='perfil'){openPerfil(d.w);return}
+  if(a==='close'){dlg.close();return}
+  if(a==='addvac'){S.draft.vacs.push({rol:ROLES[0],ini:'18:00',fin:'23:00',cupos:1,tarifa:100000});render();return}
+  if(a==='delvac'){S.draft.vacs.splice(+d.i,1);render();return}
+  if(a==='copy'){const el=$('#invite'),t=el.textContent;const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Enlace seleccionado: cópialo con Ctrl+C')};
+    try{navigator.clipboard.writeText(t).then(()=>toast('Enlace copiado'),sel)}catch(_){sel()}return}
+  if(a==='adv'){DB.offsetH+=6;toast('El reloj de la demo avanzó 6 horas')}
+  else if(a==='confirm'){const[e,v]=findV(d.e,d.v);if(conf(v)<v.cupos){v.postulaciones.find(p=>p.wid===d.w).estado='confirmado';
+      if(isToday(e.fecha))v.asistencia[d.w]={ent:'',sal:'',estado:'pendiente',cal:0};toast(`${W_(d.w).nombre} confirmado como ${v.rol}`)}}
+  else if(a==='reject'){const[,v]=findV(d.e,d.v);v.postulaciones.find(p=>p.wid===d.w).estado='rechazado'}
+  else if(a==='convocar'){const[e,v]=findV(d.e,d.v);const ws=DB.WORKERS.filter(w=>w.ops.includes(e.op)&&w.roles.includes(v.rol)&&!v.convocados.includes(w.id));
+      ws.forEach(w=>v.convocados.push(w.id));toast(ws.length?`Convocaste a ${ws.length} persona(s) de tu equipo`:'Todo tu personal con ese rol ya está convocado')}
+  else if(a==='abrir'){const[,v]=findV(d.e,d.v);v.fase='general';toast(`${v.rol} ahora está en el calendario general`)}
+  else if(a==='ausente'){const[e,v]=findV(d.e,d.v);toast(marcarAusente(e,v,d.w))}
+  else return;
+  commit();
+});
+document.addEventListener('change',ev=>{const t=ev.target;
+  if(t.id==='who'){S.opId=t.value;S.ev=null;pref('op',t.value);render()}
+  else if(t.dataset.k){const[eid,vid,wid]=t.dataset.k.split('|');const[,v]=findV(eid,vid);const a=v.asistencia[wid];
+    if(t.dataset.f==='cal'){const n=+t.value,w=W_(wid);if(a.cal)w.ratings.pop();if(n)w.ratings.push(n);a.cal=n}
+    else{a[t.dataset.f]=t.value;if(t.dataset.f==='ent'&&t.value&&a.estado!=='presente'){a.estado='presente';W_(wid).presentes++}}
+    commit()}
+  else if(t.id==='recip'){OP(S.opId).compartir=t.checked;toast(t.checked?'Tu personal ahora es visible en la bolsa compartida':'Dejaste de compartir tu personal');commit()}
+  else if(t.id==='bolsaRol'){S.bolsaRol=t.value;render()}
+  else if(t.dataset.d){S.draft[t.dataset.d]=t.type==='checkbox'?t.checked:t.value}
+  else if(t.dataset.dv){const v=S.draft.vacs[+t.dataset.dv];v[t.dataset.f]=t.type==='number'?+t.value:t.value}
+});
+document.addEventListener('input',ev=>{const t=ev.target;
+  if(t.dataset.d&&t.type!=='checkbox')S.draft[t.dataset.d]=t.value;
+  if(t.dataset.dv){const v=S.draft.vacs[+t.dataset.dv];v[t.dataset.f]=t.type==='number'?+t.value:t.value}});
+document.addEventListener('submit',ev=>{ev.preventDefault();if(ev.target.id!=='fcrear')return;const d=S.draft;
+  if(!d.nombre.trim()||!d.lugar.trim()){toast('Completa el nombre del evento y el lugar');return}
+  const e={id:nid('e'),op:S.opId,nombre:d.nombre.trim(),fecha:d.fecha,lugar:d.lugar.trim(),zona:d.zona,
+    vacantes:d.vacs.map(x=>newVacante({id:nid('v'),rol:x.rol,ini:x.ini,fin:x.fin,cupos:Math.max(1,+x.cupos),tarifa:+x.tarifa,fase:'propio',cierre:now().getTime()+(+d.plazo)*3600e3}))};
+  if(d.convocar)e.vacantes.forEach(v=>DB.WORKERS.filter(w=>w.ops.includes(S.opId)&&w.roles.includes(v.rol)).forEach(w=>v.convocados.push(w.id)));
+  DB.EVENTS.push(e);S.ev=e.id;S.view='eventos';S.draft=null;toast('Evento publicado. Tu personal ya lo ve en su calendario.');commit();window.scrollTo(0,0)});
+render();
+</script>
+</body>
+</html>
