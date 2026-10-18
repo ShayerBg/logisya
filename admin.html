@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LogisYa · Administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="logisya.css">
+<style>
+.rep{background:var(--card);border-radius:18px;padding:18px;display:grid;gap:10px}
+.rules li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<header class="nav" id="nav"></header>
+<main class="page" id="app"></main>
+<footer class="footer"><div><span>LogisYa · prototipo con datos de ejemplo</span><span>El administrador gestiona la bolsa compartida y resuelve conflictos entre operadores y trabajadores.</span></div></footer>
+<script src="logisya-data.js" charset="utf-8"></script>
+<script>
+const S={view:'resumen'};
+const TABS=[['resumen','Resumen'],['reportes','Reportes de horas'],['operadores','Operadores'],['reglas','Reglas']];
+
+function render(){
+  tick();
+  $('#nav').innerHTML=appNav({tabs:TABS,active:S.view,selectHtml:'<span class="chip-clock">Administrador</span>',otherHref:'operador.html',otherLabel:'Vista operador'});
+  $('#app').innerHTML=S.view==='resumen'?vResumen():S.view==='reportes'?vReportes():S.view==='operadores'?vOperadores():vReglas();
+}
+window.LY_render=render;
+function commit(){save();render()}
+const head=(eb,t,s)=>`<div class="page-head"><div><span class="eyebrow">${I.shield} ${eb}</span><h1 class="h1" style="margin-top:10px">${t}<span class="soft" style="display:block">${s}</span></h1></div></div>`;
+
+function vResumen(){
+  const ops=Object.values(DB.OPS),bolsa=DB.WORKERS.filter(w=>w.enBolsa).length,abiertos=reportesAbiertos().filter(r=>r.a.reporte.estado==='abierto').length;
+  let cupos=0,c=0;DB.EVENTS.filter(e=>!isPast(e.fecha)).forEach(e=>e.vacantes.forEach(v=>{cupos+=v.cupos;c+=conf(v)}));
+  const k=(t,ic,lab,num,sub)=>`<div class="kcard"><span class="tile ${t}">${ic}</span><div><div class="lab">${lab}</div><div class="sub">${sub}</div></div><div class="num">${num}</div></div>`;
+  return head('Panel del administrador','Administración','de la bolsa compartida')+`<div class="kpis">
+    ${k('t1',I.users,'Operadores',ops.length,`${ops.filter(o=>o.compartir).length} comparten su personal`)}
+    ${k('t4',I.globe,'Trabajadores en la bolsa',bolsa,`de ${DB.WORKERS.length} registrados`)}
+    ${k('t3',I.check,'Cupos cubiertos',`${c}/${cupos}`,'Eventos próximos de todos los operadores')}
+    ${k('t5',I.shield,'Reportes abiertos',abiertos,'Registros de horas en disputa')}</div>
+    <div class="panel"><h3>Disponibilidad por rol</h3><span class="small muted">Trabajadores en la bolsa por rol. Es la información agregada del sector que hoy no existe.</span>
+    <div class="tbl"><table><thead><tr><th>Rol</th><th>En la bolsa</th><th>Disponibles sábado</th><th>Disponibles domingo</th></tr></thead><tbody>
+    ${ROLES.map(r=>{const ws=DB.WORKERS.filter(w=>w.enBolsa&&w.roles.includes(r));return `<tr><td>${esc(r)}</td><td class="num">${ws.length}</td><td class="num">${ws.filter(w=>w.disp.includes(6)).length}</td><td class="num">${ws.filter(w=>w.disp.includes(0)).length}</td></tr>`}).join('')}
+    </tbody></table></div></div>`;
+}
+function vReportes(){
+  const rs=reportesAbiertos();
+  return head('Conflictos','Reportes de horas','enviados por los operadores')+`<div class="stack">
+    ${rs.map(({e,v,wid,a})=>{const w=W_(wid),r=a.reporte;return `<div class="rep">
+      <div class="row between"><h3>${esc(w.nombre)} · ${esc(v.rol)}</h3>${r.estado==='abierto'?'<span class="pill warn">Abierto</span>':`<span class="pill ok">Resuelto · ${r.decision==='anular'?'registro anulado':'registro aceptado'}</span>`}</div>
+      <span class="small muted">${esc(e.nombre)} · ${fdate(e.fecha)} · ${esc(OP(e.op).nombre)} · reportado ${fdt(r.at)}</span>
+      <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="kcard"><span class="lab small">Entrada marcada</span><span class="num">${a.ent||'—'}</span></div><div class="kcard"><span class="lab small">Salida marcada</span><span class="num">${a.sal||'—'}</span></div><div class="kcard"><span class="lab small">Horas</span><span class="num">${horas(a.ent,a.sal).toFixed(1)}</span></div></div>
+      <p><strong>Motivo del operador:</strong> ${esc(r.motivo)}</p>
+      ${r.estado==='abierto'?`<div class="row" style="justify-content:flex-end"><button class="btn btn-danger btn-sm" data-act="resolver" data-d="anular" data-e="${e.id}" data-v="${v.id}" data-w="${wid}">Anular registro</button><button class="btn btn-primary btn-sm" data-act="resolver" data-d="aceptar" data-e="${e.id}" data-v="${v.id}" data-w="${wid}">Aceptar registro del trabajador</button></div>`:''}
+    </div>`}).join('')||'<p class="note">No hay reportes. Cuando un operador reporte un registro de horas aparecerá aquí.</p>'}</div>`;
+}
+function vOperadores(){
+  return head('Operadores','Empresas registradas','y su participación en la bolsa')+`<div class="panel"><div class="tbl"><table>
+    <thead><tr><th>Operador</th><th>Comparte su personal</th><th>Personal propio</th><th>Eventos</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${Object.values(DB.OPS).map(o=>`<tr><td>${esc(o.nombre)}</td><td>${o.compartir?'<span class="pill ok">Sí</span>':'<span class="pill">No</span>'}</td>
+      <td class="num">${DB.WORKERS.filter(w=>w.ops.includes(o.id)).length}</td><td class="num">${DB.EVENTS.filter(e=>e.op===o.id).length}</td>
+      <td>${o.activo===false?'<span class="pill bad">Suspendido</span>':'<span class="pill ok">Activo</span>'}</td>
+      <td><button class="btn btn-sm ${o.activo===false?'btn-primary':'btn-danger'}" data-act="estado" data-o="${o.id}">${o.activo===false?'Reactivar':'Suspender'}</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function vReglas(){
+  return head('Transparencia','Reglas de la plataforma','visibles para todos')+`<div class="grid2">
+    <div class="panel rules"><h3>Cómo se calcula la calificación</h3><ul>
+      <li>La calificación es el promedio de las notas de 1 a 5 que dan los operadores.</li>
+      <li>Un operador solo puede calificar después de validar el registro de horas.</li>
+      <li>El porcentaje de asistencia sale de los turnos confirmados en los que la persona marcó entrada.</li>
+      <li>El trabajador nunca paga por postularse ni por aparecer en la bolsa.</li></ul></div>
+    <div class="panel rules"><h3>Cómo se eligen los reemplazos</h3><ul>
+      <li><strong>Obligatorio:</strong> tener el rol, estar disponible ese día y no tener otro turno confirmado.</li>
+      <li><strong>Deseable:</strong> haber trabajado con el operador (+2), vivir en la zona (+1) y la calificación (hasta +1).</li>
+      <li>Si falta un requisito obligatorio, la persona no se propone.</li></ul></div></div>`;
+}
+
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,d=b.dataset;
+  if(a==='view'){S.view=d.v;window.scrollTo(0,0);render();return}
+  if(a==='adv'){DB.offsetH+=6;toast('El reloj de la demo avanzó 6 horas')}
+  else if(a==='resolver'){const[,v]=findV(d.e,d.v);resolverReporte(v,d.w,d.d);toast(d.d==='anular'?'Registro anulado. El operador y el trabajador fueron notificados.':'Registro aceptado y bloqueado.')}
+  else if(a==='estado'){const o=OP(d.o);o.activo=o.activo===false;toast(o.activo?`${o.nombre} reactivado`:`${o.nombre} suspendido`)}
+  else return;
+  commit();
+});
+render();
+</script>
+</body>
+</html>
