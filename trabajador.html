@@ -42,7 +42,7 @@
 <main class="page" id="app"></main>
 <footer class="footer"><div><span>LogisYa · prototipo con datos de ejemplo</span><span>Registrarte y postularte es gratis. Ningún operador te puede cobrar por usar LogisYa.</span></div></footer>
 <dialog id="dlg"></dialog>
-<script src="logisya-data.js"></script>
+<script src="logisya-data.js" charset="utf-8"></script>
 <script>
 const S={view:'calendario',wid:pref('wid')||'w1',f:{rol:'',zona:'',disp:false,fecha:''},cal:{y:2026,m:9}};
 if(!W_(S.wid))S.wid='w1';
@@ -136,9 +136,21 @@ function vMis(w){
      <div class="kcard"><span class="tile t3">${I.check}</span><div class="lab">Confirmados</div><div class="num">${confirmados}</div></div>
      <div class="kcard"><span class="tile t1">${I.clock}</span><div class="lab">En revisión</div><div class="num">${pend}</div></div>
      <div class="kcard"><span class="tile t4">${I.star}</span><div class="lab">Mi calificación</div><div class="num">${rating(w).toFixed(1)}</div></div></div>
+   ${turnosHoy(w)}
    <div class="panel">${rows.length?`<div class="tbl"><table><thead><tr><th>Fecha</th><th>Evento</th><th>Rol y turno</th><th>Operador</th><th>Pago</th><th>Estado</th><th>Horas</th></tr></thead><tbody>
     ${rows.map(([e,v,p])=>{const a=v.asistencia[w.id];return `<tr><td class="num" style="white-space:nowrap">${fdate(e.fecha)}</td><td>${esc(e.nombre)}</td><td>${esc(v.rol)} <span class="num small muted">${v.ini}–${v.fin}</span></td><td class="small">${esc(OP(e.op).nombre)}</td><td class="num">${cop(v.tarifa)}</td><td>${estadoPill(p.estado)}</td><td class="num">${a&&a.sal?horas(a.ent,a.sal).toFixed(1):'—'}</td></tr>`}).join('')}
     </tbody></table></div>`:'<p class="note">Aún no te has postulado. Busca oportunidades en el calendario.</p>'}</div>`;
+}
+function turnosHoy(w){
+  const hoy=[];DB.EVENTS.forEach(e=>e.vacantes.forEach(v=>{if(puedeMarcar(e,v,w.id))hoy.push([e,v])}));
+  if(!hoy.length)return '';
+  return hoy.map(([e,v])=>{const a=v.asistencia[w.id]||nuevaAsistencia();
+    const est=a.estado==='ausente'?'<span class="pill bad">Marcado como ausente</span>':a.validado?'<span class="pill ok">Validado por el operador</span>':a.reporte&&a.reporte.estado==='abierto'?'<span class="pill warn">En revisión del administrador</span>':a.sal?'<span class="pill">Esperando validación</span>':a.ent?'<span class="pill acc">En turno</span>':'<span class="pill">Sin marcar</span>';
+    const btn=a.estado==='ausente'||a.sal?'':!a.ent?`<button class="btn btn-primary" data-act="marcar" data-t="ent" data-e="${e.id}" data-v="${v.id}">${I.clock} Marcar entrada</button>`:`<button class="btn btn-dark" data-act="marcar" data-t="sal" data-e="${e.id}" data-v="${v.id}">${I.clock} Marcar salida</button>`;
+    return `<section class="panel" style="gap:12px"><div class="row between"><div><span class="eyebrow">${I.clock} Turno de hoy</span><h2 class="h2" style="margin-top:6px">${esc(v.rol)} · ${esc(e.nombre)}</h2></div>${est}</div>
+      <div class="meta"><span>${I.users}${esc(OP(e.op).nombre)}</span><span>${I.clock}<span class="num">${v.ini}–${v.fin}</span></span><span>${I.pin}${esc(e.lugar)}</span></div>
+      <div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="kcard"><span class="lab small">Entrada</span><span class="num">${a.ent||'—'}</span></div><div class="kcard"><span class="lab small">Salida</span><span class="num">${a.sal||'—'}</span></div><div class="kcard"><span class="lab small">Horas</span><span class="num">${horas(a.ent,a.sal).toFixed(1)}</span></div></div>
+      <div class="row between"><span class="small muted">La hora la pone el sistema al marcar. Nadie la puede editar después, ni tú ni el operador.</span>${btn}</div></section>`}).join('');
 }
 function vPerfil(w){
   return `<div class="page-head"><div><span class="eyebrow">${I.check} Mi perfil</span>
@@ -180,6 +192,7 @@ document.addEventListener('click',ev=>{
   if(a==='close'){dlg.close();return}
   if(a==='adv'){DB.offsetH+=6;toast('El reloj de la demo avanzó 6 horas')}
   else if(a==='postular'){const[e,v]=findV(d.e,d.v),w=W_(S.wid);if(!v.postulaciones.some(p=>p.wid===w.id)){v.postulaciones.push({wid:w.id,estado:'pendiente',origen:origenPara(e,v,w),at:now().getTime()});toast(`Te postulaste como ${v.rol}. ${OP(e.op).nombre} revisará tu perfil.`)}}
+  else if(a==='marcar'){const[e,v]=findV(d.e,d.v);toast(marcar(e,v,S.wid,d.t))}
   else if(a==='dia'){const w=W_(S.wid),i=+d.v;w.disp=w.disp.includes(i)?w.disp.filter(x=>x!==i):[...w.disp,i].sort()}
   else return;
   commit();

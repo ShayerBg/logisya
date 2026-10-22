@@ -1,0 +1,768 @@
+{
+  "fecha": "2026-10-22T01:30:59.882Z",
+  "cpu": 4,
+  "acciones": {
+    "conCPU4x": {
+      "A1": {
+        "rol": "Operador",
+        "nombre": "Confirmar postulante",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 32,
+            "proc": 10.4
+          },
+          {
+            "r": 2,
+            "dur": 32,
+            "proc": 10.1
+          },
+          {
+            "r": 3,
+            "dur": 32,
+            "proc": 10.2
+          },
+          {
+            "r": 4,
+            "dur": 32,
+            "proc": 9.4
+          },
+          {
+            "r": 5,
+            "dur": 48,
+            "proc": 11.9
+          },
+          {
+            "r": 6,
+            "dur": 32,
+            "proc": 9.3
+          }
+        ]
+      },
+      "A2": {
+        "rol": "Operador",
+        "nombre": "Convocar a mi personal",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 32,
+            "proc": 11.8
+          },
+          {
+            "r": 2,
+            "dur": 96,
+            "proc": 36.8
+          },
+          {
+            "r": 3,
+            "dur": 32,
+            "proc": 10.1
+          },
+          {
+            "r": 4,
+            "dur": 24,
+            "proc": 9.8
+          },
+          {
+            "r": 5,
+            "dur": 24,
+            "proc": 10.5
+          },
+          {
+            "r": 6,
+            "dur": 32,
+            "proc": 9.3
+          }
+        ]
+      },
+      "A3": {
+        "rol": "Operador",
+        "nombre": "Abrir vacante al calendario general",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 24,
+            "proc": 10.2
+          },
+          {
+            "r": 2,
+            "dur": 32,
+            "proc": 10.8
+          },
+          {
+            "r": 3,
+            "dur": 24,
+            "proc": 10.3
+          },
+          {
+            "r": 4,
+            "dur": 32,
+            "proc": 9.9
+          },
+          {
+            "r": 5,
+            "dur": 32,
+            "proc": 12.4
+          },
+          {
+            "r": 6,
+            "dur": 24,
+            "proc": 9.9
+          }
+        ]
+      },
+      "A4": {
+        "rol": "Operador",
+        "nombre": "Validar registro de horas",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 48,
+            "proc": 11.2
+          },
+          {
+            "r": 2,
+            "dur": 80,
+            "proc": 22
+          },
+          {
+            "r": 3,
+            "dur": 112,
+            "proc": 29.6
+          },
+          {
+            "r": 4,
+            "dur": 88,
+            "proc": 26
+          },
+          {
+            "r": 5,
+            "dur": 80,
+            "proc": 17.1
+          },
+          {
+            "r": 6,
+            "dur": 48,
+            "proc": 15.5
+          }
+        ]
+      },
+      "A5": {
+        "rol": "Trabajador",
+        "nombre": "Postularse a una vacante",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 72,
+            "proc": 23.6
+          },
+          {
+            "r": 2,
+            "dur": 64,
+            "proc": 16.6
+          },
+          {
+            "r": 3,
+            "dur": 56,
+            "proc": 16.9
+          },
+          {
+            "r": 4,
+            "dur": 64,
+            "proc": 22.4
+          },
+          {
+            "r": 5,
+            "dur": 56,
+            "proc": 17.4
+          },
+          {
+            "r": 6,
+            "dur": 56,
+            "proc": 15.6
+          }
+        ]
+      },
+      "A6": {
+        "rol": "Trabajador",
+        "nombre": "Marcar entrada del turno",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 32,
+            "proc": 10.8
+          },
+          {
+            "r": 2,
+            "dur": 32,
+            "proc": 10
+          },
+          {
+            "r": 3,
+            "dur": 64,
+            "proc": 19.4
+          },
+          {
+            "r": 4,
+            "dur": 40,
+            "proc": 10.4
+          },
+          {
+            "r": 5,
+            "dur": 32,
+            "proc": 9
+          },
+          {
+            "r": 6,
+            "dur": 64,
+            "proc": 21.9
+          }
+        ]
+      }
+    },
+    "sinCPU": {
+      "A1": {
+        "rol": "Operador",
+        "nombre": "Confirmar postulante",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 16,
+            "proc": 2.1
+          },
+          {
+            "r": 2,
+            "dur": 16,
+            "proc": 2.9
+          },
+          {
+            "r": 3,
+            "dur": 16,
+            "proc": 2.1
+          },
+          {
+            "r": 4,
+            "dur": 16,
+            "proc": 1.8
+          },
+          {
+            "r": 5,
+            "dur": 16,
+            "proc": 2.1
+          },
+          {
+            "r": 6,
+            "dur": 16,
+            "proc": 2
+          }
+        ]
+      },
+      "A2": {
+        "rol": "Operador",
+        "nombre": "Convocar a mi personal",
+        "muestras": [
+          {
+            "r": 1,
+            "error": "no se registró evento de clic en [data-act=\"convocar\"]"
+          },
+          {
+            "r": 2,
+            "error": "no se registró evento de clic en [data-act=\"convocar\"]"
+          },
+          {
+            "r": 3,
+            "error": "no se registró evento de clic en [data-act=\"convocar\"]"
+          },
+          {
+            "r": 4,
+            "error": "no se registró evento de clic en [data-act=\"convocar\"]"
+          },
+          {
+            "r": 5,
+            "dur": 16,
+            "proc": 2.3
+          },
+          {
+            "r": 6,
+            "error": "no se registró evento de clic en [data-act=\"convocar\"]"
+          }
+        ]
+      },
+      "A3": {
+        "rol": "Operador",
+        "nombre": "Abrir vacante al calendario general",
+        "muestras": [
+          {
+            "r": 1,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          },
+          {
+            "r": 2,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          },
+          {
+            "r": 3,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          },
+          {
+            "r": 4,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          },
+          {
+            "r": 5,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          },
+          {
+            "r": 6,
+            "error": "no se registró evento de clic en [data-act=\"abrir\"]"
+          }
+        ]
+      },
+      "A4": {
+        "rol": "Operador",
+        "nombre": "Validar registro de horas",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 16,
+            "proc": 1.9
+          },
+          {
+            "r": 2,
+            "dur": 24,
+            "proc": 2.4
+          },
+          {
+            "r": 3,
+            "dur": 16,
+            "proc": 2.4
+          },
+          {
+            "r": 4,
+            "error": "no se registró evento de clic en [data-act=\"validar\"]"
+          },
+          {
+            "r": 5,
+            "dur": 16,
+            "proc": 2.8
+          },
+          {
+            "r": 6,
+            "dur": 16,
+            "proc": 3.5
+          }
+        ]
+      },
+      "A5": {
+        "rol": "Trabajador",
+        "nombre": "Postularse a una vacante",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 16,
+            "proc": 3.1
+          },
+          {
+            "r": 2,
+            "dur": 16,
+            "proc": 3.6
+          },
+          {
+            "r": 3,
+            "error": "no se registró evento de clic en [data-act=\"postular\"]"
+          },
+          {
+            "r": 4,
+            "dur": 16,
+            "proc": 4.8
+          },
+          {
+            "r": 5,
+            "dur": 16,
+            "proc": 3
+          },
+          {
+            "r": 6,
+            "dur": 16,
+            "proc": 3.5
+          }
+        ]
+      },
+      "A6": {
+        "rol": "Trabajador",
+        "nombre": "Marcar entrada del turno",
+        "muestras": [
+          {
+            "r": 1,
+            "dur": 16,
+            "proc": 2.1
+          },
+          {
+            "r": 2,
+            "error": "no se registró evento de clic en [data-act=\"marcar\"][data-t=\"ent\"]"
+          },
+          {
+            "r": 3,
+            "error": "no se registró evento de clic en [data-act=\"marcar\"][data-t=\"ent\"]"
+          },
+          {
+            "r": 4,
+            "error": "no se registró evento de clic en [data-act=\"marcar\"][data-t=\"ent\"]"
+          },
+          {
+            "r": 5,
+            "dur": 16,
+            "proc": 2.2
+          },
+          {
+            "r": 6,
+            "dur": 16,
+            "proc": 2.5
+          }
+        ]
+      }
+    }
+  },
+  "memoria": {
+    "conCPU4x": [
+      {
+        "vista": "index",
+        "rep": 1,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 2,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 3,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 4,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 5,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 6,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "operador",
+        "rep": 1,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 2,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 3,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 4,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 5,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 6,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "trabajador",
+        "rep": 1,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 2,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 3,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 4,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 5,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 6,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "admin",
+        "rep": 1,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 2,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 3,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 4,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 5,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 6,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      }
+    ],
+    "sinCPU": [
+      {
+        "vista": "index",
+        "rep": 1,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 2,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 3,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 4,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 5,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "index",
+        "rep": 6,
+        "heapMB": 0.7,
+        "totalMB": 1.5,
+        "nodos": 168
+      },
+      {
+        "vista": "operador",
+        "rep": 1,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 2,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 3,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 4,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 5,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "operador",
+        "rep": 6,
+        "heapMB": 0.72,
+        "totalMB": 1.75,
+        "nodos": 338
+      },
+      {
+        "vista": "trabajador",
+        "rep": 1,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 2,
+        "heapMB": 0.74,
+        "totalMB": 2,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 3,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 4,
+        "heapMB": 0.74,
+        "totalMB": 2,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 5,
+        "heapMB": 0.74,
+        "totalMB": 2,
+        "nodos": 292
+      },
+      {
+        "vista": "trabajador",
+        "rep": 6,
+        "heapMB": 0.74,
+        "totalMB": 1.75,
+        "nodos": 292
+      },
+      {
+        "vista": "admin",
+        "rep": 1,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 2,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 3,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 4,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 5,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      },
+      {
+        "vista": "admin",
+        "rep": 6,
+        "heapMB": 0.71,
+        "totalMB": 1.75,
+        "nodos": 118
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+name: Desplegar en GitHub Pages
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Activar GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Preparar el sitio
+        run: |
+          mkdir -p _sitio
+          cp index.html operador.html trabajador.html admin.html logisya.css logisya-data.js _sitio/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _sitio
+      - name: Publicar
+        id: desplegar
+        uses: actions/deploy-pages@v4

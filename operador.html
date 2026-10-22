@@ -31,7 +31,7 @@
 <main class="page" id="app"></main>
 <footer class="footer"><div><span>LogisYa · prototipo con datos de ejemplo</span><span>Los cambios se guardan en este navegador y se reflejan en la vista del trabajador.</span></div></footer>
 <dialog id="dlg"></dialog>
-<script src="logisya-data.js"></script>
+<script src="logisya-data.js" charset="utf-8"></script>
 <script>
 const S={view:'eventos',ev:'e0',opId:pref('op')||'op1',bolsaTab:'mios',bolsaRol:'',draft:null};
 if(!OP(S.opId))S.opId='op1';
@@ -72,6 +72,7 @@ function vEventos(){
   return `<div class="page-head"><div><span class="eyebrow">${I.check} Panel del operador</span>
       <h1 class="h1" style="margin-top:10px">${esc(op.nombre)}<span class="soft" style="display:block">Eventos y personal</span></h1></div>
       <button class="btn btn-primary" data-act="view" data-v="crear">Nuevo evento ${I.arrow}</button></div>
+    ${op.activo===false?'<div class="alert"><strong>Cuenta suspendida por el administrador.</strong> Tus eventos no aparecen en el calendario de los trabajadores.</div>':''}
     ${kpis(evs)}
     <div class="grid2">
       <div class="side"><div class="row between" style="padding:4px 6px 6px"><strong>Mis eventos</strong><span class="small muted">${evs.length}</span></div>
@@ -99,23 +100,26 @@ function vacante(e,v,today){
      ${op.compartir?`<button class="btn btn-sm btn-white" data-act="abrir" data-e="${e.id}" data-v="${v.id}">Abrir ya al calendario general</button>`:''}`:'';
   let rem='';
   if(v.reemplazo){const ns=v.reemplazo.notificados.map(W_);
-    rem=`<div class="alert"><strong>Reemplazo de última hora.</strong> ${esc(W_(v.reemplazo.por).nombre)} quedó como ausente (${fdt(v.reemplazo.inicio)}). ${ns.length?`Se notificó a ${ns.length} persona(s) con perfil de ${esc(v.rol)}: ${ns.map(w=>esc(w.nombre)).join(', ')}. Sus postulaciones aparecen abajo.`:'No se encontró personal disponible con ese perfil.'}</div>`}
+    rem=`<div class="alert"><strong>Reemplazo de última hora.</strong> ${esc(W_(v.reemplazo.por).nombre)} quedó como ausente (${fdt(v.reemplazo.inicio)}). ${ns.length?`Se notificó a ${ns.length} persona(s) que cumplen rol, disponibilidad y no tienen otro turno ese día, ordenadas por puntaje: ${ns.map(w=>{const p=puntaje(e,v,w);return `${esc(w.nombre)} (${p.puntaje.toFixed(2)}${p.motivos.length?' · '+p.motivos.join(', '):''})`}).join('; ')}.`:'No se encontró personal disponible con ese perfil.'}</div>`}
   let asis='';
   const confs=v.postulaciones.filter(p=>p.estado==='confirmado'||p.estado==='ausente');
-  if(today&&confs.length){
-    asis=`<div class="stack" style="gap:8px"><span class="label">Registro de asistencia y horas</span><div class="tbl"><table>
-      <thead><tr><th>Persona</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Calificación</th><th></th></tr></thead><tbody>
-      ${confs.map(p=>{const w=W_(p.wid);const a=v.asistencia[w.id]||(v.asistencia[w.id]={ent:'',sal:'',estado:'pendiente',cal:0});
-        if(a.estado==='ausente')return `<tr><td>${esc(w.nombre)}</td><td colspan="5"><span class="pill bad">Ausente</span></td></tr>`;
+  if(enJornada(e)&&confs.length){
+    asis=`<div class="stack" style="gap:8px"><span class="label">Registro de asistencia y horas</span>
+      <span class="small muted">La entrada y la salida las marca cada trabajador desde su celular. Tú validas el registro o lo reportas; no puedes editar las horas.</span><div class="tbl"><table>
+      <thead><tr><th>Persona</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Registro</th><th>Calificación</th><th></th></tr></thead><tbody>
+      ${confs.map(p=>{const w=W_(p.wid);const a=v.asistencia[w.id]||(v.asistencia[w.id]=nuevaAsistencia());
+        if(a.estado==='ausente')return `<tr><td>${esc(w.nombre)}</td><td colspan="6"><span class="pill bad">Ausente</span></td></tr>`;
         const k=`${e.id}|${v.id}|${w.id}`;
+        const reg=a.validado?'<span class="pill ok">Validado · bloqueado</span>':a.reporte&&a.reporte.estado==='abierto'?'<span class="pill warn">Reportado al admin</span>':a.sal?'<span class="pill">Por validar</span>':a.ent?'<span class="pill acc">En turno</span>':'<span class="pill">Sin marcar</span>';
+        const acc=a.validado||(a.reporte&&a.reporte.estado==='abierto')?'':!a.ent?`<button class="btn btn-danger btn-sm" data-act="ausente" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Marcar ausente</button>`
+          :a.sal?`<div class="row" style="flex-wrap:nowrap"><button class="btn btn-primary btn-sm" data-act="validar" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Validar</button><button class="btn btn-sm" data-act="reportar" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Reportar</button></div>`:'';
         return `<tr><td>${esc(w.nombre)}</td>
-        <td><input type="time" id="ent-${k}" data-k="${k}" data-f="ent" value="${a.ent}" aria-label="Entrada de ${esc(w.nombre)}"></td>
-        <td><input type="time" id="sal-${k}" data-k="${k}" data-f="sal" value="${a.sal}" aria-label="Salida de ${esc(w.nombre)}"></td>
-        <td class="num">${horas(a.ent,a.sal).toFixed(1)}</td>
-        <td><select id="cal-${k}" data-k="${k}" data-f="cal" ${a.sal?'':'disabled title="Disponible al registrar la salida"'} aria-label="Calificación de ${esc(w.nombre)}">${[0,1,2,3,4,5].map(i=>`<option value="${i}" ${a.cal===i?'selected':''}>${i?i+' ★':'—'}</option>`).join('')}</select></td>
-        <td>${a.ent?'':`<button class="btn btn-danger btn-sm" data-act="ausente" data-e="${e.id}" data-v="${v.id}" data-w="${w.id}">Marcar ausente</button>`}</td></tr>`}).join('')}
+        <td class="num">${a.ent||'—'}</td><td class="num">${a.sal||'—'}</td>
+        <td class="num">${horas(a.ent,a.sal).toFixed(1)}</td><td>${reg}</td>
+        <td><select id="cal-${k}" data-k="${k}" data-f="cal" ${a.validado?'':'disabled title="Disponible al validar el registro"'} aria-label="Calificación de ${esc(w.nombre)}">${[0,1,2,3,4,5].map(i=>`<option value="${i}" ${a.cal===i?'selected':''}>${i?i+' ★':'—'}</option>`).join('')}</select></td>
+        <td>${acc}</td></tr>`}).join('')}
       </tbody></table></div></div>`;
-  } else if(!today&&!isPast(e.fecha)&&c) asis='<p class="note">El registro de entrada, salida y calificación se habilita el día del evento.</p>';
+  } else if(!enJornada(e)&&!isPast(e.fecha)&&c) asis='<p class="note">El registro de entrada, salida y calificación se habilita el día del evento.</p>';
   return `<div class="vac">
     <div class="vac-top"><div><h3 style="font-size:17px">${esc(v.rol)}</h3><span class="small muted"><span class="num">${v.ini}–${v.fin}</span> · ${cop(v.tarifa)} por turno</span></div>
       <div class="row"><div class="meter" role="img" aria-label="${c} de ${v.cupos} cupos cubiertos"><i style="width:${pct}%"></i></div><span class="num small"><strong>${c}</strong>/${v.cupos}</span></div></div>
@@ -195,6 +199,14 @@ function openPerfil(id){const w=W_(id);
   dlg.showModal();
 }
 
+function openReporte(eid,vid,wid){
+  dlg.innerHTML=`<form class="dlg" id="frep" data-e="${eid}" data-v="${vid}" data-w="${wid}"><div><span class="eyebrow">${I.shield} Reportar registro</span><h2 class="h2" style="margin-top:6px">${esc(W_(wid).nombre)}</h2></div>
+   <p class="small muted">El reporte llega al administrador de LogisYa, que revisa el caso. Mientras tanto el registro no se puede validar.</p>
+   <label class="field">Motivo<select id="rep-motivo"><option>La hora de salida no coincide con lo que vi</option><option>La hora de entrada no coincide con lo que vi</option><option>La persona se retiró antes y no marcó salida</option><option>Otro</option></select></label>
+   <div class="row" style="justify-content:flex-end"><button class="btn btn-soft" type="button" data-act="close">Cancelar</button><button class="btn btn-primary" type="submit">Enviar reporte</button></div></form>`;
+  dlg.showModal();
+}
+
 /* ---------- Interacción ---------- */
 document.addEventListener('click',ev=>{
   const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,d=b.dataset;
@@ -209,20 +221,21 @@ document.addEventListener('click',ev=>{
     try{navigator.clipboard.writeText(t).then(()=>toast('Enlace copiado'),sel)}catch(_){sel()}return}
   if(a==='adv'){DB.offsetH+=6;toast('El reloj de la demo avanzó 6 horas')}
   else if(a==='confirm'){const[e,v]=findV(d.e,d.v);if(conf(v)<v.cupos){v.postulaciones.find(p=>p.wid===d.w).estado='confirmado';
-      if(isToday(e.fecha))v.asistencia[d.w]={ent:'',sal:'',estado:'pendiente',cal:0};toast(`${W_(d.w).nombre} confirmado como ${v.rol}`)}}
+      if(isToday(e.fecha))v.asistencia[d.w]=nuevaAsistencia();toast(`${W_(d.w).nombre} confirmado como ${v.rol}`)}}
   else if(a==='reject'){const[,v]=findV(d.e,d.v);v.postulaciones.find(p=>p.wid===d.w).estado='rechazado'}
   else if(a==='convocar'){const[e,v]=findV(d.e,d.v);const ws=DB.WORKERS.filter(w=>w.ops.includes(e.op)&&w.roles.includes(v.rol)&&!v.convocados.includes(w.id));
       ws.forEach(w=>v.convocados.push(w.id));toast(ws.length?`Convocaste a ${ws.length} persona(s) de tu equipo`:'Todo tu personal con ese rol ya está convocado')}
   else if(a==='abrir'){const[,v]=findV(d.e,d.v);v.fase='general';toast(`${v.rol} ahora está en el calendario general`)}
   else if(a==='ausente'){const[e,v]=findV(d.e,d.v);toast(marcarAusente(e,v,d.w))}
+  else if(a==='validar'){const[,v]=findV(d.e,d.v);toast(validar(v,d.w)?`Registro de ${W_(d.w).nombre} validado. Ya no se puede modificar.`:'No se pudo validar')}
+  else if(a==='reportar'){openReporte(d.e,d.v,d.w);return}
   else return;
   commit();
 });
 document.addEventListener('change',ev=>{const t=ev.target;
   if(t.id==='who'){S.opId=t.value;S.ev=null;pref('op',t.value);render()}
   else if(t.dataset.k){const[eid,vid,wid]=t.dataset.k.split('|');const[,v]=findV(eid,vid);const a=v.asistencia[wid];
-    if(t.dataset.f==='cal'){const n=+t.value,w=W_(wid);if(a.cal)w.ratings.pop();if(n)w.ratings.push(n);a.cal=n}
-    else{a[t.dataset.f]=t.value;if(t.dataset.f==='ent'&&t.value&&a.estado!=='presente'){a.estado='presente';W_(wid).presentes++}}
+    if(t.dataset.f==='cal')calificar(v,wid,+t.value);
     commit()}
   else if(t.id==='recip'){OP(S.opId).compartir=t.checked;toast(t.checked?'Tu personal ahora es visible en la bolsa compartida':'Dejaste de compartir tu personal');commit()}
   else if(t.id==='bolsaRol'){S.bolsaRol=t.value;render()}
@@ -232,7 +245,9 @@ document.addEventListener('change',ev=>{const t=ev.target;
 document.addEventListener('input',ev=>{const t=ev.target;
   if(t.dataset.d&&t.type!=='checkbox')S.draft[t.dataset.d]=t.value;
   if(t.dataset.dv){const v=S.draft.vacs[+t.dataset.dv];v[t.dataset.f]=t.type==='number'?+t.value:t.value}});
-document.addEventListener('submit',ev=>{ev.preventDefault();if(ev.target.id!=='fcrear')return;const d=S.draft;
+document.addEventListener('submit',ev=>{ev.preventDefault();
+  if(ev.target.id==='frep'){const f=ev.target.dataset;const[,v]=findV(f.e,f.v);reportar(v,f.w,$('#rep-motivo').value);dlg.close();toast('Reporte enviado al administrador');commit();return}
+  if(ev.target.id!=='fcrear')return;const d=S.draft;
   if(!d.nombre.trim()||!d.lugar.trim()){toast('Completa el nombre del evento y el lugar');return}
   const e={id:nid('e'),op:S.opId,nombre:d.nombre.trim(),fecha:d.fecha,lugar:d.lugar.trim(),zona:d.zona,
     vacantes:d.vacs.map(x=>newVacante({id:nid('v'),rol:x.rol,ini:x.ini,fin:x.fin,cupos:Math.max(1,+x.cupos),tarifa:+x.tarifa,fase:'propio',cierre:now().getTime()+(+d.plazo)*3600e3}))};

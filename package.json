@@ -1,0 +1,12 @@
+{
+  "name": "logisya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototipo de LogisYa: gestión de personal y bolsa de talento compartida para operadores de eventos en el Atlántico",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.15.0"
+  }
+}
