@@ -17,7 +17,9 @@ function cargar() {
   };
   vm.createContext(ctx);
   const codigo = fs.readFileSync(path.join(__dirname, '..', 'logisya-data.js'), 'utf8');
-  vm.runInContext(codigo, ctx);
+  // Se le da nombre al script para que la cobertura de Node pueda atribuirlos a logisya-data.js
+  const script = new vm.Script(codigo, { filename: path.join(__dirname, '..', 'logisya-data.js') });
+  script.runInContext(ctx);
   // Las declaraciones const/let/function del script quedan disponibles en el mismo contexto
   return expr => vm.runInContext(expr, ctx);
 }
