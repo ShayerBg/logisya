@@ -10,14 +10,21 @@
      EDGE_PATH    ruta al navegador Chromium/Edge
      LOGISYA_URL  base del sitio medido
      LOGISYA_OUT  carpeta donde se deja interacciones.json
-     REPS         repeticiones por acción (por defecto 6)                          */
+     REPS         repeticiones por acción (por defecto 6)
+
+   NOTA
+   El script original no se guardó en el disco y se regeneró antes de publicarlo.
+   Para verificar que mide lo mismo, se volvió a ejecutar y sus resultados coinciden con los de las
+   tablas del documento de evidencia (evidencias/PRUEBAS-RENDIMIENTO.md), sección 5.
+   La librería se instala con: npm install --no-save puppeteer-core
+   (también está declarada en devDependencies de package.json, así que npm install la trae).     */
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
 
 const EDGE = process.env.EDGE_PATH || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const BASE = process.env.LOGISYA_URL || 'https://sergioa3728.github.io/logisya';
-const OUT = process.env.LOGISYA_OUT || path.join(__dirname, '..', 'reportes');
+const OUT = process.env.LOGISYA_OUT || path.join(__dirname, '..', 'evidencias');
 const CPU = 4; // mismo ralentizado de CPU que usa Lighthouse en emulación móvil
 const REPS = Number(process.env.REPS || 6); // repeticiones por acción; se reporta la mediana
 
@@ -236,6 +243,9 @@ async function main() {
 
   fs.mkdirSync(OUT, { recursive: true });
   const destino = path.join(OUT, 'interacciones.json');
+  if (fs.existsSync(destino)) {
+    console.log('\nAVISO: se sobrescribe ' + destino + '. Guarda una copia si quieres conservar esa campaña.');
+  }
   fs.writeFileSync(destino, JSON.stringify(salida, null, 2), 'utf8');
   await browser.close();
   console.log(`\nOK -> ${destino}`);

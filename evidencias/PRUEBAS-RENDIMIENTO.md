@@ -499,52 +499,64 @@ y salida.
 
 ### 5.2 Resultados (6 repeticiones por acción)
 
-Seis repeticiones por acción (no tres) porque dos campañas iniciales de tres muestras_each dieron
-medianas distintas para la misma acción: con seis muestras la mediana converge y el rango por
-actividad es interpretable.
+Cada acción se midió **6 veces**, que es el número de repeticiones con el que se elaboró el reporte de
+la entrega. Los valores de esta tabla son los de la campaña registrada en
+`evidencias/interacciones.json` (22 de octubre de 2026, 01:30 UTC):
 
-| # | Acción | Mediana `duration` | Rango | **Mediana del manejador** |
-|---|---|---|---|---|
-| A1 | Confirmar postulante | **32 ms** | 32–48 ms | 10,2 ms |
-| A2 | Convocar a mi personal | **32 ms** | 24–96 ms | 10,3 ms |
-| A3 | Abrir al calendario general | **28 ms** | 24–32 ms | 10,2 ms |
-| A4 | Validar registro de horas | **80 ms** | 48–112 ms | 19,6 ms |
-| A5 | Postularse a una vacante | **60 ms** | 56–72 ms | 17,2 ms |
-| A6 | Marcar entrada del turno | **36 ms** | 32–64 ms | 10,6 ms |
+| # | Acción | **Mediana** | P25–P75 | Min–Máx | **Mediana del manejador** |
+|---|---|---|---|---|---|
+| A1 | Confirmar postulante | **32 ms** | 32–32 ms | 32–48 ms | 10,1 ms |
+| A2 | Convocar a mi personal | **32 ms** | 24–32 ms | 24–96 ms | 10,1 ms |
+| A3 | Abrir al calendario general | **24 ms** | 24–32 ms | 24–32 ms | 10,2 ms |
+| A4 | Validar registro de horas | **80 ms** | 48–80 ms | 48–112 ms | 17,1 ms |
+| A5 | Postularse a una vacante | **56 ms** | 56–64 ms | 56–72 ms | 16,9 ms |
+| A6 | Marcar entrada del turno | **32 ms** | 32–40 ms | 32–64 ms | 10,4 ms |
 
 - La primera columna es el `duration` de `PerformanceEventTiming`, que es lo que muestra la pista
   *Interactions* de DevTools: incluye el tiempo de procesamiento **y** la espera hasta el siguiente
   pintado, por eso siempre es múltiplo de 8 ms (la duración de un frame).
-- La segunda es `processingEnd − processingStart`: el tiempo real del manejador del evento, sin el
-  frame. Es la cifra que explica el coste de la lógica de negocio.
+- La última es `processingEnd − processingStart`: el tiempo real del manejador del evento, sin el
+  frame. Es la cifra que mide el coste de la lógica de negocio.
 
-**Rango total: 28–80 ms.** Todas las acciones responden dentro de un frame o poco más, incluso con la
-CPU cuatro veces más lenta. Ninguna interaction se acerca al umbral de 200 ms que Google considera
-"buena" para INP.
+**Rango de las medianas: 24–80 ms.** Todas las acciones responden en uno o dos frames, incluso con la
+CPU cuatro veces más lenta. Ninguna se acerca al umbral de 200 ms que Google considera "bueno" para
+INP.
 
-Las tres acciones más lentas coinciden con las que repintan más DOM:
+Las dos acciones más lentas coinciden con las que repintan más DOM:
 
 | Acción | Qué hace distinto | Mediana |
 |---|---|---|
 | **A4 Validar registro de horas** | Repinta la tabla de asistencia completa y recalcula el promedio de la calificación | 80 ms |
-| **A5 Postularse a una vacante** | Repinta la lista completa de oportunidades y recalcula el filtro | 60 ms |
-| **A6 Marcar entrada** | Repinta el panel del turno y recalcula las horas | 36 ms |
-| **A1, A2, A3** | Cambian un dato y repintan un fragmento | 28–32 ms |
+| **A5 Postularse a una vacante** | Repinta la lista completa de oportunidades y recalcula el filtro | 56 ms |
+| **A1, A2, A6** | Cambian un dato y repintan un fragmento | 32 ms |
+| **A3 Abrir al calendario general** | Cambia la fase de la vacante | 24 ms |
+
+**Sobre la varianza.** La métrica `duration` incluye la espera hasta el próximo pintado, y esa espera
+depende de cuánto compita el navegador por la CPU. Al repetir la campaña en otro momento, con otros
+navegadores abiertos en la misma máquina, las medianas de la misma acción pueden duplicarse (A1 pasó
+de 32 ms a 68 ms) sin que haya cambiado nada del código. Por eso la cifra que se reporta es **la
+mediana de las 6 repeticiones**, y no el mínimo ni la primera muestra. El **tiempo del manejador**
+(10,1–17,1 ms) es el indicador estable del coste real de la aplicación.
+
+> **Al volver a ejecutar el script se sobrescribe `evidencias/interacciones.json`.** Los números de
+> esta tabla son los de la campaña del 22 de octubre a la 01:30 UTC; una corrida nueva produce
+> cifras distintas (más altas si la máquina está ocupada). Si necesitas conservar esta campaña,
+> guarda una copia del archivo antes de volver a medir.
 
 ### 5.3 La misma medición sin ralentizar la CPU
 
-Sin ralentizado de CPU, todas las acciones caen a **16 ms** (un frame) y el manejador baja a 2–4 ms.
-Más ainda: **Chrome no genera entrada de Event Timing para la mayoría de las interacciones**, porque
-terminan dentro del mismo frame en que empezaron:
+Sin ralentizado de CPU, todas las acciones caen a **16 ms** (un frame) y el manejador baja a 1,6–2,5 ms.
+Además, **Chrome no genera entrada de Event Timing para algunas interacciones**, porque terminan
+dentro del mismo frame en que empezaron:
 
 | Acción | Capturas con evento / 6 | Mediana |
 |---|---|---|
 | A1 Confirmar postulante | 6/6 | 16 ms |
-| A2 Convocar a mi personal | 1/6 | 16 ms |
-| A3 Abrir al calendario general | **0/6** | n/d |
+| A2 Convocar a mi personal | 4/6 | 16 ms |
+| A3 Abrir al calendario general | 3/6 | 16 ms |
 | A4 Validar registro de horas | 5/6 | 16 ms |
-| A5 Postularse a una vacante | 5/6 | 16 ms |
-| A6 Marcar entrada del turno | 3/6 | 16 ms |
+| A5 Postularse a una vacante | 6/6 | 16 ms |
+| A6 Marcar entrada del turno | 4/6 | 16 ms |
 
 Esto confirma que la medición **debe hacerse con CPU ×4** si se quiere comparar con Lighthouse: sin
 ralentizar, la señal es más corta que la resolución del instrumento.
@@ -842,17 +854,16 @@ foreach ($v in $vistas) {
 ### 10.3 Repetir la medición de interacciones y memoria
 
 ```powershell
-$env:NODE_PATH = "C:\Users\sergi\scoop\persist\nodejs\bin\node_modules"
-node "C:\Users\sergi\AppData\Local\Temp\opencode\medicion\medir.js"
+npm install puppeteer-core --no-save    # o: npm install --save-dev puppeteer-core
+node ".\pruebas\medir.js"
 ```
 
 El script está en `pruebas/medir.js` (en el repositorio) y deja el resultado en
-`reportes/interacciones.json`. Recorre las seis acciones con 6 repeticiones cada una (con y sin
-CPU ×4) y mide el heap de las cuatro vistas. Se ejecuta con:
+`evidencias/interacciones.json`. Recorre las seis acciones con 6 repeticiones cada una (con y sin
+CPU ×4) y mide el heap de las cuatro vistas. Para cambiar el número de repeticiones:
 
 ```powershell
-$env:NODE_PATH = "C:\Users\sergi\scoop\persist\nodejs\bin\node_modules"
-$env:REPS = "6"
+$env:REPS = "12"
 node ".\pruebas\medir.js"
 ```
 
@@ -894,10 +905,9 @@ node --test --experimental-test-coverage tests/*.test.js
    origen y el soporte de Brotli mejorarían el LCP y el peso transferido.
 4. **El repositorio `SergioA3728/logisya` contiene solo los artefactos estáticos.** La fuente
    permanece en `ShayerBg/logisya`, rama `develop`.
-5. **Los reportes de Lighthouse se guardaron en `reportes/`** (`*.report.html` para lectura y
-   `*.report.json` para análisis), junto con `medianas.csv` e `interacciones.json`. No se han
-   versionado en Git; si se quieren adjuntar a la entrega,
-   conviene subirlos como *release* o artefacto de CI en lugar de al historial del repositorio.
+5. **Los reportes de Lighthouse se guardaron en `reportes/`** (ignorado por git; `*.report.html` para
+   lectura y `*.report.json` para análisis) y las evidencias que sí se versionan, en `evidencias/`
+   (`PRUEBAS-RENDIMIENTO.md`, `interacciones.json`, `interacciones-resumen.csv` y `medianas.csv`).
 6. **La primera corrida de cada vista es un *outlier* por CDN en frío** (TTFB de 116–153 ms frente a
    22–72 ms). Es la razón de medir tres veces: la mediana lo neutraliza, el promedio no.
 7. **La medición de interacción depende del ralentizado de CPU.** Sin CPU ×4, las seis acciones

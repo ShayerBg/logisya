@@ -1,0 +1,7 @@
+﻿"Id","Vista","Accion","Repeticiones","Mediana_ms","P25_ms","P75_ms","Min_ms","Max_ms","MedianaManejador_ms"
+"A1","Operador","Confirmar postulante","6","32","32","32","32","48","10,1"
+"A2","Operador","Convocar a mi personal","6","32","24","32","24","96","10,1"
+"A3","Operador","Abrir vacante al calendario general","6","24","24","32","24","32","10,2"
+"A4","Operador","Validar registro de horas","6","80","48","80","48","112","17,1"
+"A5","Trabajador","Postularse a una vacante","6","56","56","64","56","72","16,9"
+"A6","Trabajador","Marcar entrada del turno","6","32","32","40","32","64","10,4"
