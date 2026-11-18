@@ -661,6 +661,12 @@ begin
   update trabajadores t set user_id = u.id from auth.users u where lower(u.email) = lower(t.email);
 end $$;
 
+-- Permisos para la app (los proyectos nuevos de Supabase no los dan solos).
+-- RLS sigue decidiendo qué filas ve y cambia cada usuario.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant execute on all functions in schema public to authenticated;
+
 -- Las funciones de mantenimiento no se pueden llamar desde la app
 revoke execute on function reset_demo() from public, anon, authenticated;
 revoke execute on function _o(text), _w(text), _post(uuid, text, text, text) from public, anon, authenticated;
@@ -681,3 +687,4 @@ end $$;
 
 -- ---------- 9. Cargar los datos ----------
 select reset_demo();
+notify pgrst, 'reload schema';
