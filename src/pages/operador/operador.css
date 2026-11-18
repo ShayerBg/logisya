@@ -1,0 +1,17 @@
+/* Estilos del panel del operador (vienen del operador.html del MVP) */
+.evlist{display:grid;gap:6px}
+.evitem{display:grid;grid-template-columns:50px minmax(0,1fr);gap:12px;align-items:center;text-align:left;border:1px solid transparent;background:#fff;border-radius:14px;padding:9px 10px;cursor:pointer;transition:border-color .15s}
+.evitem:hover{border-color:var(--line)}
+.evitem[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.datebox{text-align:center;border-radius:10px;background:var(--card);padding:5px 0;line-height:1.1}
+.datebox span{display:block;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.07em;font-weight:600}
+.datebox b{font-size:19px;font-weight:600;letter-spacing:-.03em}
+.evitem.today .datebox{background:var(--ink);color:#fff}
+.evitem.today .datebox span{color:#C9C9D0}
+.ev-head{display:grid;gap:6px;padding-bottom:4px}
+.vac{background:var(--card);border-radius:18px;padding:18px;display:grid;gap:14px;min-width:0}
+.vac .note{background:#fff}
+.vac-top{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center}
+.vacrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end;background:var(--card);padding:14px;border-radius:16px}
+.bolsa-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.bolsa-head select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
