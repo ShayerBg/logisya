@@ -10,8 +10,8 @@ La app está publicada en **https://logisya.netlify.app**. Entra con una de esta
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
-| Operador (Eventos Caribe BTL) | caribe@logisya.demo | *(la que les compartimos)* |
-| Trabajadora (Andrea Pérez) | andrea@logisya.demo | *(la misma)* |
+| Operador (Eventos Caribe BTL) | caribe@logisya.demo | 123456 |
+| Trabajadora (Andrea Pérez) | andrea@logisya.demo | 123456 |
 
 Recorrido sugerido:
 
