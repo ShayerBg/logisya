@@ -6,7 +6,7 @@ Equipo: Sergio Andrés Avila Velilla, Shayer Andrés Bermúdez Guerrero, Laura V
 
 ## Cómo probarlo
 
-Abre el enlace de la app y entra con una de estas cuentas de prueba:
+La app está publicada en **https://logisya.netlify.app**. Entra con una de estas cuentas de prueba:
 
 | Rol | Correo | Contraseña |
 | --- | --- | --- |
