@@ -77,6 +77,7 @@ function Detalle({ e, ...ctx }) {
 }
 
 function Fase({ v }) {
+  if (conf(v) >= v.cupos) return <span className="pill ok">Cupo completo</span>
   if (v.fase === 'general') return <span className="pill ok">Calendario general</span>
   if (v.bloqueada) return <span className="pill bad">Plazo vencido · no compartes tu personal</span>
   return <span className="pill acc">Solo mi personal · abre al general en {hrsLeft(v.cierre)}</span>
@@ -105,7 +106,7 @@ function Vacante({ e, v, hoy, db, op, run, ocupado, verPerfil }) {
         <div className="row"><div className="meter" role="img" aria-label={`${c} de ${v.cupos} cupos cubiertos`}><i style={{ width: pct + '%' }} /></div><span className="num small"><strong>{c}</strong>/{v.cupos}</span></div>
       </div>
       <div className="vac-top"><Fase v={v} />
-        {v.fase === 'propio' && !isPast(e.fecha) && (
+        {v.fase === 'propio' && !isPast(e.fecha) && !lleno && (
           <div className="row">
             <button className="btn btn-sm btn-white" disabled={ocupado} onClick={() => run(() => rpc('convocar_mi_personal', { p_vacante: v.id }), n => n ? `Convocaste a ${n} persona(s) de tu equipo` : 'Todo tu personal con ese rol ya está convocado')}>Convocar a mi personal</button>
             {op.compartir && <button className="btn btn-sm btn-white" disabled={ocupado} onClick={() => run(() => rpc('abrir_al_general', { p_vacante: v.id }), `${v.rol} ahora está en el calendario general`)}>Abrir ya al calendario general</button>}
